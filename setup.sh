@@ -6,26 +6,32 @@ set -e
 
 echo "Installing Chill Helper..."
 
-# Build ChillHelper if not already built
-if [ ! -f ".build/Release/ChillHelper" ]; then
-    echo "Building ChillHelper..."
-    xcodebuild -scheme ChillHelper -configuration Release build
-fi
+# Build ChillHelper
+echo "Building ChillHelper..."
+xcodebuild -scheme ChillHelper -configuration Release build 2>&1 | tail -5
 
-HELPER_PATH="/Library/PrivilegedHelperTools/com.chill.helper"
-PLIST_PATH="/Library/LaunchDaemons/com.chill.helper.plist"
-BUILT_HELPER=".build/Release/ChillHelper"
+# Find the built binary via Xcode build settings
+BUILT_HELPER=$(xcodebuild -scheme ChillHelper -configuration Release -showBuildSettings 2>/dev/null | grep -m1 "BUILT_PRODUCTS_DIR" | awk '{print $3}')
+BUILT_HELPER="$BUILT_HELPER/ChillHelper"
 
-# Check if built helper exists
 if [ ! -f "$BUILT_HELPER" ]; then
     echo "Error: ChillHelper binary not found at $BUILT_HELPER"
-    echo "Please build the ChillHelper target first."
+    echo "Try building ChillHelper in Xcode first (Product > Build)."
     exit 1
 fi
 
+echo "Found helper at: $BUILT_HELPER"
+
+HELPER_PATH="/Library/PrivilegedHelperTools/com.chill.helper"
+PLIST_PATH="/Library/LaunchDaemons/com.chill.helper.plist"
+
 echo "Requesting sudo access to install helper..."
 
+# Unload existing daemon if present
+sudo launchctl unload "$PLIST_PATH" 2>/dev/null || true
+
 # Copy helper binary
+sudo mkdir -p /Library/PrivilegedHelperTools
 sudo cp "$BUILT_HELPER" "$HELPER_PATH"
 sudo chmod 544 "$HELPER_PATH"
 sudo chown root:wheel "$HELPER_PATH"
@@ -39,8 +45,7 @@ sudo chown root:wheel "$PLIST_PATH"
 echo "Loading LaunchDaemon..."
 sudo launchctl load "$PLIST_PATH"
 
-echo "Installation complete!"
-echo "ChillHelper is now running as root."
 echo ""
+echo "Installation complete! ChillHelper is now running as root."
 echo "To verify: sudo launchctl list | grep com.chill"
 echo "To uninstall: sudo launchctl unload $PLIST_PATH && sudo rm $HELPER_PATH $PLIST_PATH"

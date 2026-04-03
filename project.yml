@@ -25,6 +25,7 @@ targets:
         excludes:
           - "**/*.swiftui"
           - "Core/SMC/**"   # SMC files live in Shared/ — included below
+          - Info.plist       # processed via info: block — not a bundle resource
       - path: Shared
     resources:
       - path: Config/Chill.entitlements

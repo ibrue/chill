@@ -113,27 +113,21 @@ struct PopoverView: View {
     }
 
     private func fanPill(label: String, rpm: Float) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: "fan.fill")
-                .font(.system(size: 10))
-                .foregroundStyle(.cyan)
-
-            Text(label)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-
-            Spacer()
-
+        VStack(spacing: 2) {
             Text(formatRPM(rpm))
-                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .font(.system(size: 18, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
 
-            Text("RPM")
-                .font(.system(size: 9, weight: .medium))
-                .foregroundStyle(.tertiary)
-                .lineLimit(1)
+            HStack(spacing: 3) {
+                Image(systemName: "fan.fill")
+                    .font(.system(size: 8))
+                    .foregroundStyle(.cyan)
+                Text(label)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
         }
         .frame(maxWidth: .infinity)
     }

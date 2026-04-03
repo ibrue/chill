@@ -11,6 +11,7 @@ schemes:
     build:
       targets:
         Chill: all
+        ChillHelper: all
   ChillHelper:
     build:
       targets:
@@ -60,7 +61,7 @@ targets:
       SWIFT_VERSION: "5.9"
       CODE_SIGN_ENTITLEMENTS: Config/ChillHelper.entitlements
       PRODUCT_BUNDLE_IDENTIFIER: com.chill.helper
-      EXECUTABLE_PATH: com.chill.helper
+      PRODUCT_NAME: ChillHelper
     info:
       path: ChillHelper/Info.plist
       properties:

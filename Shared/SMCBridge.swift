@@ -150,6 +150,17 @@ class SMCBridge {
         }
     }
 
+    // MARK: - SMC Command Selectors
+    // AppleSMC uses a single IOKit selector (kSMCHandleYPCEvent = 2)
+    // The actual operation is specified in the data8 field of SMCParamStruct
+    private static let kSMCHandleYPCEvent: UInt32 = 2
+
+    private enum SMCCommand: UInt8 {
+        case readKey = 5
+        case writeKey = 6
+        case getKeyInfo = 9
+    }
+
     // MARK: - Low-level IOKit Operations
 
     /// Perform a read operation via IOConnectCallStructMethod
@@ -157,19 +168,19 @@ class SMCBridge {
         return queue.sync {
             guard isConnected else { return nil }
 
+            // Step 1: Get key info
             var param = SMCParamStruct()
             param.key = fourCharCode(key)
-            param.data8 = 0
+            param.data8 = SMCCommand.getKeyInfo.rawValue
 
-            var inputSize = MemoryLayout<SMCParamStruct>.size
             var outputSize = MemoryLayout<SMCParamStruct>.size
 
             let result = withUnsafeMutablePointer(to: &param) { ptr in
                 IOConnectCallStructMethod(
                     connection,
-                    2,  // kSMCGetKeyInfo
+                    Self.kSMCHandleYPCEvent,
                     ptr,
-                    inputSize,
+                    MemoryLayout<SMCParamStruct>.size,
                     ptr,
                     &outputSize
                 )
@@ -179,20 +190,20 @@ class SMCBridge {
                 return nil
             }
 
-            // Now do the actual read
+            // Step 2: Read the key value
             var readParam = SMCParamStruct()
             readParam.key = fourCharCode(key)
             readParam.keyInfo = param.keyInfo
+            readParam.data8 = SMCCommand.readKey.rawValue
 
-            inputSize = MemoryLayout<SMCParamStruct>.size
             outputSize = MemoryLayout<SMCParamStruct>.size
 
             let readResult = withUnsafeMutablePointer(to: &readParam) { ptr in
                 IOConnectCallStructMethod(
                     connection,
-                    5,  // kSMCReadKey
+                    Self.kSMCHandleYPCEvent,
                     ptr,
-                    inputSize,
+                    MemoryLayout<SMCParamStruct>.size,
                     ptr,
                     &outputSize
                 )
@@ -211,19 +222,19 @@ class SMCBridge {
         return queue.sync {
             guard isConnected else { return false }
 
-            // First, get key info
+            // Step 1: Get key info
             var param = SMCParamStruct()
             param.key = fourCharCode(key)
+            param.data8 = SMCCommand.getKeyInfo.rawValue
 
-            var inputSize = MemoryLayout<SMCParamStruct>.size
             var outputSize = MemoryLayout<SMCParamStruct>.size
 
             let infoResult = withUnsafeMutablePointer(to: &param) { ptr in
                 IOConnectCallStructMethod(
                     connection,
-                    2,  // kSMCGetKeyInfo
+                    Self.kSMCHandleYPCEvent,
                     ptr,
-                    inputSize,
+                    MemoryLayout<SMCParamStruct>.size,
                     ptr,
                     &outputSize
                 )
@@ -233,21 +244,21 @@ class SMCBridge {
                 return false
             }
 
-            // Now perform the write
+            // Step 2: Write the key value
             var writeParam = SMCParamStruct()
             writeParam.key = fourCharCode(key)
             writeParam.keyInfo = param.keyInfo
+            writeParam.data8 = SMCCommand.writeKey.rawValue
             writeParam.setBytesArray(bytes)
 
-            inputSize = MemoryLayout<SMCParamStruct>.size
             outputSize = MemoryLayout<SMCParamStruct>.size
 
             let writeResult = withUnsafeMutablePointer(to: &writeParam) { ptr in
                 IOConnectCallStructMethod(
                     connection,
-                    6,  // kSMCWriteKey
+                    Self.kSMCHandleYPCEvent,
                     ptr,
-                    inputSize,
+                    MemoryLayout<SMCParamStruct>.size,
                     ptr,
                     &outputSize
                 )
@@ -259,10 +270,24 @@ class SMCBridge {
 
     // MARK: - Public API
 
-    /// Read a float value from SMC
+    /// Read a float value from SMC (handles flt and sp78 types automatically)
     func readFloat(key: String) -> Float? {
         guard let param = readSMC(key: key) else { return nil }
-        return floatFromSMCBytes(param.getBytesArray())
+        let bytes = param.getBytesArray()
+        let type = SMCType.fromTypeCode(param.keyInfo.dataType)
+
+        switch type {
+        case .float32:
+            return floatFromSMCBytes(bytes)
+        case .sp78:
+            // sp78 fixed-point: value = Int16(big-endian) / 256.0
+            guard bytes.count >= 2 else { return nil }
+            let raw = Int16(bitPattern: UInt16(bytes[0]) << 8 | UInt16(bytes[1]))
+            return Float(raw) / 256.0
+        default:
+            // Try as IEEE 754 float as fallback
+            return floatFromSMCBytes(bytes)
+        }
     }
 
     /// Write a float value to SMC (requires root)

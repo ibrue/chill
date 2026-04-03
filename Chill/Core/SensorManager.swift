@@ -81,6 +81,11 @@ final class SensorManager {
             let gpu = self.smc.readFloat(key: SMCKey.gpuDie)
             let bat = self.smc.readFloat(key: SMCKey.batteryTemp)
 
+            // Debug: log first successful read cycle
+            if self.nextHistoryID == 0 {
+                print("[Sensors] F0Ac=\(f0 as Any) F1Ac=\(f1 as Any) Ts0S=\(kbd as Any) TCXC=\(cpu as Any) TG0D=\(gpu as Any) TB1T=\(bat as Any)")
+            }
+
             // Single batch update on main thread
             DispatchQueue.main.async {
                 if let v = f0 { self.fan0RPM = v }

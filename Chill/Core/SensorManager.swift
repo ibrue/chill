@@ -19,6 +19,15 @@ final class SensorManager {
     var fanCount: Int = 2
     var isThrottling: Bool = false
 
+    // MARK: - History (rolling 60 samples = ~2 min at 2s interval)
+
+    private static let maxHistoryCount = 60
+    private var nextHistoryID = 0
+
+    var fan0History: [TimestampedValue] = []
+    var fan1History: [TimestampedValue] = []
+    var cpuTempHistory: [TimestampedValue] = []
+
     // For forwarding to helper
     var allReadings: [String: Float] {
         [
@@ -64,27 +73,38 @@ final class SensorManager {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
 
-            let readings = [
-                (SMCKey.fanActual0, \SensorManager.fan0RPM),
-                (SMCKey.fanActual1, \SensorManager.fan1RPM),
-                (SMCKey.keyboardTemp, \SensorManager.keyboardTemp),
-                (SMCKey.cpuComplex, \SensorManager.cpuTemp),
-                (SMCKey.gpuDie, \SensorManager.gpuTemp),
-                (SMCKey.batteryTemp, \SensorManager.batteryTemp),
-            ]
+            // Read all values on background thread
+            let f0 = self.smc.readFloat(key: SMCKey.fanActual0)
+            let f1 = self.smc.readFloat(key: SMCKey.fanActual1)
+            let kbd = self.smc.readFloat(key: SMCKey.keyboardTemp)
+            let cpu = self.smc.readFloat(key: SMCKey.cpuComplex)
+            let gpu = self.smc.readFloat(key: SMCKey.gpuDie)
+            let bat = self.smc.readFloat(key: SMCKey.batteryTemp)
 
-            for (key, keyPath) in readings {
-                if let value = self.smc.readFloat(key: key) {
-                    DispatchQueue.main.async {
-                        self[keyPath: keyPath] = value
-                    }
-                }
-            }
-
-            // Estimate throttling (CPU temp > 95°C typically triggers throttling)
-            let shouldThrottle = self.cpuTemp > 95
+            // Single batch update on main thread
             DispatchQueue.main.async {
-                self.isThrottling = shouldThrottle
+                if let v = f0 { self.fan0RPM = v }
+                if let v = f1 { self.fan1RPM = v }
+                if let v = kbd { self.keyboardTemp = v }
+                if let v = cpu { self.cpuTemp = v }
+                if let v = gpu { self.gpuTemp = v }
+                if let v = bat { self.batteryTemp = v }
+
+                self.isThrottling = self.cpuTemp > 95
+
+                // Append history
+                let now = Date()
+                let id = self.nextHistoryID
+                self.nextHistoryID += 1
+
+                self.fan0History.append(TimestampedValue(id: id, date: now, value: self.fan0RPM))
+                self.fan1History.append(TimestampedValue(id: id, date: now, value: self.fan1RPM))
+                self.cpuTempHistory.append(TimestampedValue(id: id, date: now, value: self.cpuTemp))
+
+                let max = Self.maxHistoryCount
+                if self.fan0History.count > max { self.fan0History.removeFirst() }
+                if self.fan1History.count > max { self.fan1History.removeFirst() }
+                if self.cpuTempHistory.count > max { self.cpuTempHistory.removeFirst() }
             }
         }
     }

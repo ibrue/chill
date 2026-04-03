@@ -26,6 +26,10 @@ struct PopoverView: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
 
+                    // MARK: - Activity Charts
+                    SensorChartsSection()
+                        .padding(.horizontal, 16)
+
                     // MARK: - Profile Selector
                     VStack(alignment: .leading, spacing: 8) {
                         Text("PROFILE")
@@ -51,7 +55,7 @@ struct PopoverView: View {
             }
         }
         .frame(width: 300)
-        .frame(minHeight: 420, maxHeight: 520)
+        .frame(minHeight: 420, maxHeight: 600)
         .sheet(isPresented: $showSettings) {
             SettingsView()
         }

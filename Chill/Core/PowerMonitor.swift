@@ -5,6 +5,7 @@ import IOKit.ps
 /// Monitors power state and suggests profiles
 @Observable
 final class PowerMonitor {
+    private let smc = globalSMCBridge
     private var timer: Timer?
 
     var isOnAC: Bool = false
@@ -12,6 +13,13 @@ final class PowerMonitor {
     var isCharging: Bool = false
     var estimatedWatts: Float = 0
     var suggestedProfileOverride: String?
+
+    // MARK: - History (rolling 60 samples = ~5 min at 5s interval)
+
+    private static let maxHistoryCount = 60
+    private var nextHistoryID = 0
+
+    var wattsHistory: [TimestampedValue] = []
 
     // MARK: - Lifecycle
 
@@ -41,6 +49,9 @@ final class PowerMonitor {
     private func updatePowerStatus() {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
+
+            // Read system power draw from SMC (no root needed for reads)
+            let watts = self.smc.readFloat(key: SMCKey.systemWatts) ?? 0
 
             // IOPSCopyPowerSourcesInfo returns Unmanaged<CFTypeRef>
             guard let snapshot = IOPSCopyPowerSourcesInfo()?.takeRetainedValue() else {
@@ -84,6 +95,7 @@ final class PowerMonitor {
                 self.isOnAC = onAC
                 self.batteryPercent = percent
                 self.isCharging = charging
+                self.estimatedWatts = watts
 
                 // Suggest profile based on power state
                 if onAC && !charging {
@@ -92,6 +104,14 @@ final class PowerMonitor {
                     self.suggestedProfileOverride = "Whisper"
                 } else {
                     self.suggestedProfileOverride = nil
+                }
+
+                // Append history
+                let id = self.nextHistoryID
+                self.nextHistoryID += 1
+                self.wattsHistory.append(TimestampedValue(id: id, date: Date(), value: self.estimatedWatts))
+                if self.wattsHistory.count > Self.maxHistoryCount {
+                    self.wattsHistory.removeFirst()
                 }
             }
         }

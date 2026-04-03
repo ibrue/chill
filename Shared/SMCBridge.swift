@@ -187,8 +187,15 @@ class SMCBridge {
             }
 
             guard result == KERN_SUCCESS else {
+                print("[SMC] getKeyInfo failed for '\(key)': kern_return=\(result) (0x\(String(result, radix: 16)))")
                 return nil
             }
+
+            let dataSize = param.keyInfo.dataSize
+            let dataType = param.keyInfo.dataType
+            let typeBytes = withUnsafeBytes(of: dataType.bigEndian) { Array($0) }
+            let typeStr = String(bytes: typeBytes, encoding: .ascii) ?? "????"
+            print("[SMC] keyInfo for '\(key)': type=\(typeStr) size=\(dataSize) result=\(param.result)")
 
             // Step 2: Read the key value
             var readParam = SMCParamStruct()
@@ -210,8 +217,12 @@ class SMCBridge {
             }
 
             guard readResult == KERN_SUCCESS else {
+                print("[SMC] readKey failed for '\(key)': kern_return=\(readResult) (0x\(String(readResult, radix: 16)))")
                 return nil
             }
+
+            let readBytes = readParam.getBytesArray().prefix(Int(dataSize))
+            print("[SMC] read '\(key)': bytes=\(Array(readBytes))")
 
             return readParam
         }

@@ -235,6 +235,52 @@ class SMCBridge {
         return Int(count)
     }
 
+    /// Scan a list of SMC keys and return the first that gives a non-zero reading
+    func findWorkingKey(from candidates: [String]) -> (key: String, value: Float)? {
+        for key in candidates {
+            if let val = readFloat(key: key), val > 0 {
+                return (key, val)
+            }
+        }
+        return nil
+    }
+
+    /// Probe common temperature keys and print what's available
+    func discoverSensors() {
+        let keysToProbe = [
+            // CPU
+            "Tp09", "Tp0T", "Tp01", "Tp05",  // CPU efficiency/perf core temps (Apple Silicon)
+            "TCXC",                             // CPU complex (Intel-era, sometimes Apple Silicon)
+            "Tc0a", "Tc0b", "Tc0c", "Tc0d",   // CPU core temps
+            "TC0D", "TC0P", "TC0F",             // CPU die/proximity
+            // GPU
+            "TG0D", "TG0P", "Tg05", "Tg0D",
+            // Keyboard / palm rest
+            "Ts0S", "Ts0P", "Ts1S", "Ts1P",
+            "TH0A", "TH0B", "TH0C",           // Heatpipe
+            // Battery
+            "TB1T", "TB0T", "TB2T",
+            // Ambient
+            "TA0P", "TA1P",
+            // SSD
+            "TN0D", "TN1D",
+            // Fan actual RPM
+            "F0Ac", "F1Ac",
+            // Fan count
+            "FNum",
+            // Power
+            "PSTR",
+        ]
+
+        print("[SMC] === Sensor Discovery ===")
+        for key in keysToProbe {
+            if let val = readFloat(key: key) {
+                print("[SMC]   \(key) = \(val)")
+            }
+        }
+        print("[SMC] === End Discovery ===")
+    }
+
     // MARK: - Helper
 
     private func fourCharCode(_ str: String) -> UInt32 {

@@ -43,8 +43,12 @@ final class SensorManager {
     // MARK: - Lifecycle
 
     init() {
+        // Discover available sensors on this Mac
+        smc.discoverSensors()
+
         // Read fan count once at startup
         fanCount = smc.readFanCount() ?? 2
+        print("[Sensors] Fan count: \(fanCount)")
 
         // Start polling
         startPolling()

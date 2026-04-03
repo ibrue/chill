@@ -30,40 +30,53 @@ struct ProfileCard: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                // Icon
-                Image(systemName: profile.sfSymbol)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(isSelected ? accentColor : .secondary)
-                    .frame(width: 32, height: 32)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(isSelected ? accentColor.opacity(0.15) : Color.clear)
-                    )
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 12) {
+                    // Icon
+                    Image(systemName: profile.sfSymbol)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(isSelected ? accentColor : .secondary)
+                        .frame(width: 32, height: 32)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(isSelected ? accentColor.opacity(0.15) : Color.clear)
+                        )
 
-                // Name + subtitle
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(profile.name)
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.primary)
+                    // Name + subtitle
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(profile.name)
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.primary)
 
-                    Text(profile.subtitle)
-                        .font(.system(size: 11, weight: .regular))
-                        .foregroundStyle(.secondary)
+                        Text(profile.subtitle)
+                            .font(.system(size: 11, weight: .regular))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    // Mini curve
+                    MiniCurve(curve: profile.curve, accentColor: accentColor)
+                        .frame(width: 48, height: 24)
+                        .opacity(isSelected ? 1.0 : 0.4)
+
+                    // Selection indicator
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(accentColor)
+                    }
                 }
 
-                Spacer()
-
-                // Mini curve
-                MiniCurve(curve: profile.curve, accentColor: accentColor)
-                    .frame(width: 48, height: 24)
-                    .opacity(isSelected ? 1.0 : 0.4)
-
-                // Selection indicator
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 14))
-                        .foregroundStyle(accentColor)
+                // Description shown when selected
+                if isSelected && !profile.description.isEmpty {
+                    Text(profile.description)
+                        .font(.system(size: 10, weight: .regular))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 8)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
             .padding(.horizontal, 12)

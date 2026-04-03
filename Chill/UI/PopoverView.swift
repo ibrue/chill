@@ -10,7 +10,6 @@ struct PopoverView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // MARK: - Header
             header
                 .padding(.horizontal, 16)
                 .padding(.top, 14)
@@ -21,16 +20,16 @@ struct PopoverView: View {
 
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 16) {
-                    // MARK: - Status Row (Fan + Temps)
+                    // Status Row (Fan + Temps)
                     statusRow
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
 
-                    // MARK: - Activity Charts
+                    // Activity Charts
                     SensorChartsSection()
                         .padding(.horizontal, 16)
 
-                    // MARK: - Profile Selector
+                    // Profile Selector
                     VStack(alignment: .leading, spacing: 8) {
                         Text("PROFILE")
                             .font(.system(size: 10, weight: .semibold, design: .rounded))
@@ -40,17 +39,7 @@ struct PopoverView: View {
                         ProfileSwitcher(profileEngine: profileEngine)
                             .padding(.horizontal, 16)
                     }
-
-                    // MARK: - Active Profile Detail
-                    if profileEngine.activeProfile.name != "Auto" {
-                        activeProfileDetail
-                            .padding(.horizontal, 16)
-                    }
-
-                    // MARK: - Power
-                    PowerBar()
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 14)
+                    .padding(.bottom, 14)
                 }
             }
         }
@@ -74,7 +63,6 @@ struct PopoverView: View {
 
             Spacer()
 
-            // Connection status dot
             Circle()
                 .fill(fanController.isHelperConnected ? Color.green : Color.red.opacity(0.6))
                 .frame(width: 6, height: 6)
@@ -86,7 +74,6 @@ struct PopoverView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
-            .help("Settings")
 
             Button(action: { NSApplication.shared.terminate(nil) }) {
                 Image(systemName: "power")
@@ -94,22 +81,23 @@ struct PopoverView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
-            .help("Quit Chill")
         }
     }
 
     // MARK: - Status Row
 
     private var statusRow: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 0) {
             // Fan(s)
-            fanStatus(index: 0, rpm: sensorManager.fan0RPM)
+            HStack(spacing: 12) {
+                fanStatus(rpm: sensorManager.fan0RPM)
 
-            if sensorManager.fanCount > 1 {
-                fanStatus(index: 1, rpm: sensorManager.fan1RPM)
+                if sensorManager.fanCount > 1 {
+                    fanStatus(rpm: sensorManager.fan1RPM)
+                }
             }
 
-            Spacer()
+            Spacer(minLength: 12)
 
             // Temps
             VStack(alignment: .trailing, spacing: 6) {
@@ -124,8 +112,8 @@ struct PopoverView: View {
         )
     }
 
-    private func fanStatus(index: Int, rpm: Float) -> some View {
-        HStack(spacing: 8) {
+    private func fanStatus(rpm: Float) -> some View {
+        HStack(spacing: 6) {
             // Mini arc gauge
             ZStack {
                 Circle()
@@ -144,24 +132,17 @@ struct PopoverView: View {
                     .animation(.spring(response: 0.4, dampingFraction: 0.7), value: rpm)
 
                 Image(systemName: "fan.fill")
-                    .font(.system(size: 10))
+                    .font(.system(size: 9))
                     .foregroundStyle(rpmColor(min(1.0, Double(rpm) / 8000.0)))
-                    .rotationEffect(.degrees(rpm > 0 ? 360 : 0))
-                    .animation(
-                        rpm > 0
-                            ? .linear(duration: max(0.3, 2.0 - Double(rpm) / 5000.0)).repeatForever(autoreverses: false)
-                            : .default,
-                        value: rpm > 0
-                    )
             }
-            .frame(width: 32, height: 32)
+            .frame(width: 28, height: 28)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("\(Int(rpm))")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                Text(formatRPM(rpm))
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundStyle(.primary)
-                    .contentTransition(.numericText())
-                    .animation(.spring(response: 0.3), value: Int(rpm))
+                    .lineLimit(1)
+                    .fixedSize()
 
                 Text("RPM")
                     .font(.system(size: 9, weight: .medium))
@@ -175,7 +156,6 @@ struct PopoverView: View {
             Text(label)
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(.tertiary)
-                .frame(width: 28, alignment: .trailing)
 
             Image(systemName: icon)
                 .font(.system(size: 9))
@@ -184,41 +164,19 @@ struct PopoverView: View {
             Text(String(format: "%.0f\u{00B0}", value))
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(.primary)
-                .frame(width: 32, alignment: .trailing)
-                .contentTransition(.numericText())
-                .animation(.spring(response: 0.3), value: Int(value))
+                .frame(minWidth: 28, alignment: .trailing)
         }
-    }
-
-    // MARK: - Active Profile Detail
-
-    private var activeProfileDetail: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(profileEngine.activeProfile.description)
-                .font(.system(size: 11, weight: .regular))
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
-
-            // Sensor badge
-            HStack(spacing: 4) {
-                Image(systemName: "dot.radiowaves.left.and.right")
-                    .font(.system(size: 9))
-                Text("Watching: \(sensorDisplayName(profileEngine.activeProfile.primarySensor))")
-                    .font(.system(size: 10, weight: .medium))
-            }
-            .foregroundStyle(.tertiary)
-        }
-        .padding(10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.gray.opacity(0.04))
-        )
-        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
     // MARK: - Helpers
+
+    private func formatRPM(_ rpm: Float) -> String {
+        let intRPM = Int(rpm)
+        if intRPM >= 1000 {
+            return String(format: "%d,%03d", intRPM / 1000, intRPM % 1000)
+        }
+        return "\(intRPM)"
+    }
 
     private func rpmColor(_ progress: Double) -> Color {
         if progress < 0.3 { return .cyan }
@@ -232,16 +190,6 @@ struct PopoverView: View {
         if temp < 65 { return .blue }
         if temp < 80 { return .orange }
         return .red
-    }
-
-    private func sensorDisplayName(_ key: String) -> String {
-        switch key {
-        case SMCKey.keyboardTemp: return "Keyboard"
-        case SMCKey.cpuComplex: return "CPU"
-        case SMCKey.gpuDie: return "GPU"
-        case SMCKey.batteryTemp: return "Battery"
-        default: return key
-        }
     }
 }
 

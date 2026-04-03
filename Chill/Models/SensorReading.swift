@@ -13,16 +13,17 @@ struct SensorReading {
     /// Get temperature value for a sensor key
     func value(for sensorKey: String) -> Float {
         switch sensorKey {
-        case SMCKey.keyboardTemp:
+        case SMCKey.keyboardTemp, SMCKey.keyboardTempAlt, "Ts1P", "Ts1S":
             return keyboardTemp
-        case SMCKey.cpuComplex, SMCKey.cpuProximity:
+        case SMCKey.cpuComplex, SMCKey.cpuComplexAlt, SMCKey.cpuProximity,
+             "Tp01", "Tp05", "Tp0T", "TC0P":
             return cpuTemp
-        case SMCKey.gpuDie:
+        case SMCKey.gpuDie, SMCKey.gpuDieAlt, "TG0P":
             return gpuTemp
-        case SMCKey.batteryTemp:
+        case SMCKey.batteryTemp, "TB0T", "TB2T":
             return batteryTemp
         default:
-            return cpuTemp  // Fallback
+            return cpuTemp
         }
     }
 

@@ -4,6 +4,7 @@ import SwiftUI
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
+    private var controlTimer: Timer?
 
     // Core objects owned by AppDelegate — injected into SwiftUI environment
     let sensorManager = SensorManager()
@@ -16,6 +17,53 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         setupMenuBar()
         setupPopover()
+        startControlLoop()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        controlTimer?.invalidate()
+        // Return to auto mode on quit
+        fanController.setAutoMode { _ in }
+    }
+
+    // MARK: - Control Loop
+
+    private func startControlLoop() {
+        controlTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            self?.applyActiveProfile()
+        }
+    }
+
+    private func applyActiveProfile() {
+        let profile = profileEngine.activeProfile
+
+        // Auto profile = let macOS handle it
+        if profile.name == "Auto" {
+            if fanController.isManualMode {
+                fanController.setAutoMode { success in
+                    if success {
+                        print("[Control] Returned to auto mode")
+                    }
+                }
+            }
+            return
+        }
+
+        // Build sensor reading snapshot
+        var reading = SensorReading.fromSensorManager(sensorManager)
+
+        // Compute target RPM using the profile curve
+        let targetRPM = profileEngine.evaluate(sensors: reading, fanMax: 8000)
+
+        // Send to helper via XPC
+        fanController.setFanMode(manual: true, fanIndex: 0, targetRPM: targetRPM) { _ in }
+
+        // Also set fan 1 if present
+        if sensorManager.fanCount > 1 {
+            fanController.setFanMode(manual: true, fanIndex: 1, targetRPM: targetRPM) { _ in }
+        }
+
+        fanController.activeProfileName = profile.name
     }
 
     // MARK: - Menu Bar Setup

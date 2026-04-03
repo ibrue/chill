@@ -115,12 +115,14 @@ final class SensorManager {
             }
 
             DispatchQueue.main.async {
-                if let v = f0 { self.fan0RPM = v }
-                if let v = f1 { self.fan1RPM = v }
-                if let v = kbd { self.keyboardTemp = v }
-                if let v = cpu { self.cpuTemp = v }
-                if let v = gpu { self.gpuTemp = v }
-                if let v = bat { self.batteryTemp = v }
+                // Exponential moving average to smooth jittery readings
+                let a: Float = 0.4  // smoothing factor (lower = smoother)
+                if let v = f0 { self.fan0RPM = self.fan0RPM == 0 ? v : self.fan0RPM * (1 - a) + v * a }
+                if let v = f1 { self.fan1RPM = self.fan1RPM == 0 ? v : self.fan1RPM * (1 - a) + v * a }
+                if let v = kbd { self.keyboardTemp = self.keyboardTemp == 0 ? v : self.keyboardTemp * (1 - a) + v * a }
+                if let v = cpu { self.cpuTemp = self.cpuTemp == 0 ? v : self.cpuTemp * (1 - a) + v * a }
+                if let v = gpu { self.gpuTemp = self.gpuTemp == 0 ? v : self.gpuTemp * (1 - a) + v * a }
+                if let v = bat { self.batteryTemp = v }  // battery temp is stable, no smoothing needed
 
                 self.isThrottling = self.cpuTemp > 95
 

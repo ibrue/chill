@@ -87,85 +87,80 @@ struct PopoverView: View {
     // MARK: - Status Row
 
     private var statusRow: some View {
-        HStack(spacing: 0) {
-            // Fan(s)
-            HStack(spacing: 12) {
-                fanStatus(rpm: sensorManager.fan0RPM)
+        VStack(spacing: 8) {
+            // Row 1: Fans
+            HStack(spacing: 0) {
+                fanPill(label: "Fan 1", rpm: sensorManager.fan0RPM)
 
                 if sensorManager.fanCount > 1 {
-                    fanStatus(rpm: sensorManager.fan1RPM)
+                    Spacer(minLength: 8)
+                    fanPill(label: "Fan 2", rpm: sensorManager.fan1RPM)
                 }
             }
 
-            Spacer(minLength: 12)
-
-            // Temps
-            VStack(alignment: .trailing, spacing: 6) {
-                tempLabel(icon: "cpu", value: sensorManager.cpuTemp, label: "CPU")
-                tempLabel(icon: "keyboard", value: sensorManager.keyboardTemp, label: "Keys")
+            // Row 2: Temps
+            HStack(spacing: 8) {
+                tempPill(icon: "cpu", value: sensorManager.cpuTemp, label: "CPU")
+                tempPill(icon: "keyboard", value: sensorManager.keyboardTemp, label: "Keys")
+                tempPill(icon: "memorychip", value: sensorManager.gpuTemp, label: "GPU")
             }
         }
-        .padding(12)
+        .padding(10)
         .background(
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.gray.opacity(0.06))
         )
     }
 
-    private func fanStatus(rpm: Float) -> some View {
+    private func fanPill(label: String, rpm: Float) -> some View {
         HStack(spacing: 6) {
-            // Mini arc gauge
-            ZStack {
-                Circle()
-                    .trim(from: 0.2, to: 0.8)
-                    .stroke(Color.gray.opacity(0.15), style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                    .rotationEffect(.degrees(90))
+            Image(systemName: "fan.fill")
+                .font(.system(size: 10))
+                .foregroundStyle(.cyan)
 
-                let progress = min(1.0, Double(rpm) / 8000.0)
-                Circle()
-                    .trim(from: 0.2, to: 0.2 + (0.6 * progress))
-                    .stroke(
-                        rpmColor(progress),
-                        style: StrokeStyle(lineWidth: 3, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(90))
-                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: rpm)
-
-                Image(systemName: "fan.fill")
-                    .font(.system(size: 9))
-                    .foregroundStyle(rpmColor(min(1.0, Double(rpm) / 8000.0)))
-            }
-            .frame(width: 28, height: 28)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(formatRPM(rpm))
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .fixedSize()
-
-                Text("RPM")
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(.tertiary)
-            }
-        }
-    }
-
-    private func tempLabel(icon: String, value: Float, label: String) -> some View {
-        HStack(spacing: 5) {
             Text(label)
                 .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
 
-            Image(systemName: icon)
-                .font(.system(size: 9))
-                .foregroundStyle(tempColor(value))
+            Spacer()
 
-            Text(String(format: "%.0f\u{00B0}", value))
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+            Text(formatRPM(rpm))
+                .font(.system(size: 15, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
-                .frame(minWidth: 28, alignment: .trailing)
+                .lineLimit(1)
+
+            Text("RPM")
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(.tertiary)
+                .lineLimit(1)
         }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func tempPill(icon: String, value: Float, label: String) -> some View {
+        VStack(spacing: 3) {
+            Text(String(format: "%.0f\u{00B0}", value))
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+
+            HStack(spacing: 3) {
+                Image(systemName: icon)
+                    .font(.system(size: 8))
+                    .foregroundStyle(tempColor(value))
+                Text(label)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(tempColor(value).opacity(0.08))
+        )
     }
 
     // MARK: - Helpers

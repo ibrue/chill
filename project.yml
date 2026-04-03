@@ -1,0 +1,66 @@
+name: Chill
+options:
+  bundleIdPrefix: com.chill
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "15.0"
+  createIntermediateGroups: true
+
+schemes:
+  Chill:
+    build:
+      targets:
+        Chill: all
+  ChillHelper:
+    build:
+      targets:
+        ChillHelper: all
+
+targets:
+  Chill:
+    type: application
+    platform: macOS
+    sources:
+      - path: Chill
+        excludes:
+          - "**/*.swiftui"
+          - "Core/SMC/**"   # SMC files live in Shared/ — included below
+      - path: Shared
+    resources:
+      - path: Config/Chill.entitlements
+        buildPhase: sources
+    dependencies:
+      - target: ChillHelper
+        embed: false
+    settings:
+      MACOSX_DEPLOYMENT_TARGET: "14.0"
+      SWIFT_VERSION: "5.9"
+      SWIFT_EXPERIMENTAL_FEATURE_OBSERVATION: true
+      CODE_SIGN_ENTITLEMENTS: Config/Chill.entitlements
+      INFOPLIST_KEY_LSUIElement: true
+      INFOPLIST_KEY_NSPrincipalClass: NSApplication
+      PRODUCT_BUNDLE_IDENTIFIER: com.chill.app
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    info:
+      path: Chill/Info.plist
+      properties:
+        LSUIElement: true
+        NSPrincipalClass: NSApplication
+        NSRequiresIPhoneOS: false
+
+  ChillHelper:
+    type: tool
+    platform: macOS
+    sources:
+      - path: ChillHelper
+      - path: Shared
+    settings:
+      MACOSX_DEPLOYMENT_TARGET: "14.0"
+      SWIFT_VERSION: "5.9"
+      CODE_SIGN_ENTITLEMENTS: Config/ChillHelper.entitlements
+      PRODUCT_BUNDLE_IDENTIFIER: com.chill.helper
+      EXECUTABLE_PATH: com.chill.helper
+    info:
+      path: ChillHelper/Info.plist
+      properties:
+        NSRequiresIPhoneOS: false

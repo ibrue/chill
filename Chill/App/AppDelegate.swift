@@ -13,6 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let powerMonitor = PowerMonitor()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
         setupMenuBar()
         setupPopover()
     }

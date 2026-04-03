@@ -10,9 +10,4 @@ struct ChillApp: App {
             EmptyView()
         }
     }
-
-    init() {
-        // Menu bar apps should hide from dock
-        NSApp.setActivationPolicy(.accessory)
-    }
 }

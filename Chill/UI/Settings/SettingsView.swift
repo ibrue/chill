@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.dismiss) var dismiss
     @State private var selectedTab: SettingsTab = .general
 
     enum SettingsTab: Hashable {
@@ -33,6 +34,11 @@ struct SettingsView: View {
                 AppRulesSettingsView()
             case .about:
                 AboutSettingsView()
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done") { dismiss() }
             }
         }
         .frame(minWidth: 600, minHeight: 500)

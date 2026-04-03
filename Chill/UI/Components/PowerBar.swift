@@ -4,62 +4,47 @@ struct PowerBar: View {
     @Environment(PowerMonitor.self) var powerMonitor
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             // Power draw
             HStack(spacing: 4) {
                 Image(systemName: "bolt.fill")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.yellow)
 
-                Text(String(format: "%.0f W", powerMonitor.estimatedWatts))
+                Text(String(format: "%.0fW", powerMonitor.estimatedWatts))
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color.yellow.opacity(0.15))
-            .cornerRadius(6)
 
             Spacer()
 
-            // Battery status
-            if !powerMonitor.isOnAC {
-                HStack(spacing: 4) {
+            // Power source
+            HStack(spacing: 4) {
+                if powerMonitor.isOnAC {
+                    Image(systemName: "bolt.circle.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.green)
+
+                    Text("AC Power")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                } else {
                     Image(systemName: batteryIcon)
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.system(size: 10))
                         .foregroundStyle(batteryColor)
 
                     Text("\(powerMonitor.batteryPercent)%")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
-
-                    if powerMonitor.isCharging {
-                        Text("Charging")
-                            .font(.system(size: 10, weight: .regular))
-                            .foregroundStyle(.green)
-                    }
+                        .foregroundStyle(.primary)
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(batteryColor.opacity(0.15))
-                .cornerRadius(6)
-            } else {
-                HStack(spacing: 4) {
-                    Image(systemName: "bolt.circle.fill")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.green)
-
-                    Text("AC Power")
-                        .font(.system(size: 11, weight: .semibold))
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.green.opacity(0.15))
-                .cornerRadius(6)
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(8)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.gray.opacity(0.06))
+        )
     }
 
     private var batteryIcon: String {
@@ -79,9 +64,7 @@ struct PowerBar: View {
 }
 
 #Preview {
-    VStack(spacing: 20) {
-        PowerBar()
-            .environment(PowerMonitor())
-    }
-    .padding()
+    PowerBar()
+        .environment(PowerMonitor())
+        .padding()
 }

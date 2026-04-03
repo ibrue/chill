@@ -18,6 +18,8 @@ struct TempCurvePoint: Codable, Identifiable, Hashable {
 struct FanProfile: Codable, Identifiable, Hashable {
     var id: UUID
     var name: String
+    var subtitle: String
+    var description: String
     var sfSymbol: String
     var primarySensor: String    // SMC key (default: Ts0S)
     var fallbackSensors: [String]
@@ -29,6 +31,8 @@ struct FanProfile: Codable, Identifiable, Hashable {
     init(
         id: UUID = UUID(),
         name: String,
+        subtitle: String = "",
+        description: String = "",
         sfSymbol: String,
         primarySensor: String = SMCKey.cpuComplex,
         fallbackSensors: [String] = [],
@@ -39,6 +43,8 @@ struct FanProfile: Codable, Identifiable, Hashable {
     ) {
         self.id = id
         self.name = name
+        self.subtitle = subtitle
+        self.description = description
         self.sfSymbol = sfSymbol
         self.primarySensor = primarySensor
         self.fallbackSensors = fallbackSensors
@@ -54,6 +60,8 @@ struct FanProfile: Codable, Identifiable, Hashable {
     static var auto: FanProfile {
         FanProfile(
             name: "Auto",
+            subtitle: "System default",
+            description: "Let macOS manage fan speed. Fans stay quiet until the system decides to ramp up.",
             sfSymbol: "leaf.fill",
             primarySensor: SMCKey.cpuComplex,
             curve: [
@@ -71,6 +79,8 @@ struct FanProfile: Codable, Identifiable, Hashable {
     static var coolKeys: FanProfile {
         FanProfile(
             name: "Cool Keys",
+            subtitle: "Keyboard comfort",
+            description: "Watches the palm rest sensor and ramps fans 10\u{00B0}C earlier than Apple. Keeps your keyboard cool while typing.",
             sfSymbol: "keyboard.fill",
             primarySensor: SMCKey.keyboardTemp,
             fallbackSensors: [SMCKey.cpuComplex],
@@ -89,7 +99,9 @@ struct FanProfile: Codable, Identifiable, Hashable {
     static var balanced: FanProfile {
         FanProfile(
             name: "Balanced",
-            sfSymbol: "gauge",
+            subtitle: "Everyday use",
+            description: "A sensible middle ground. Triggers fans 8\u{00B0}C earlier than Apple for better sustained performance without noise.",
+            sfSymbol: "gauge.medium",
             primarySensor: SMCKey.cpuComplex,
             curve: [
                 TempCurvePoint(temp: 30, rpmPercent: 0.25),
@@ -106,6 +118,8 @@ struct FanProfile: Codable, Identifiable, Hashable {
     static var whisper: FanProfile {
         FanProfile(
             name: "Whisper",
+            subtitle: "Silent operation",
+            description: "Prioritizes silence. Fans stay near minimum until temps get critical. Best for quiet environments.",
             sfSymbol: "moon.fill",
             primarySensor: SMCKey.cpuComplex,
             curve: [
@@ -124,6 +138,8 @@ struct FanProfile: Codable, Identifiable, Hashable {
     static var performance: FanProfile {
         FanProfile(
             name: "Performance",
+            subtitle: "Max cooling",
+            description: "Aggressive fan ramp to prevent CPU throttling. Ideal for exports, compiles, and gaming.",
             sfSymbol: "bolt.fill",
             primarySensor: SMCKey.cpuComplex,
             curve: [

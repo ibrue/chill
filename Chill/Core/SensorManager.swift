@@ -8,6 +8,12 @@ final class SensorManager {
     private let smc = globalSMCBridge
     private var timer: Timer?
 
+    // MARK: - Resolved Keys (detected at startup for this Mac model)
+
+    private var cpuKey: String = SMCKey.cpuComplex
+    private var gpuKey: String = SMCKey.gpuDie
+    private var kbdKey: String = SMCKey.keyboardTemp
+
     // MARK: - Published Values
 
     var fan0RPM: Float = 0
@@ -16,7 +22,7 @@ final class SensorManager {
     var cpuTemp: Float = 0
     var gpuTemp: Float = 0
     var batteryTemp: Float = 0
-    var fanCount: Int = 2
+    var fanCount: Int = 1
     var isThrottling: Bool = false
 
     // MARK: - History (rolling 60 samples = ~2 min at 2s interval)
@@ -28,27 +34,20 @@ final class SensorManager {
     var fan1History: [TimestampedValue] = []
     var cpuTempHistory: [TimestampedValue] = []
 
-    // For forwarding to helper
-    var allReadings: [String: Float] {
-        [
-            SMCKey.fanActual0: fan0RPM,
-            SMCKey.fanActual1: fan1RPM,
-            SMCKey.keyboardTemp: keyboardTemp,
-            SMCKey.cpuComplex: cpuTemp,
-            SMCKey.gpuDie: gpuTemp,
-            SMCKey.batteryTemp: batteryTemp,
-        ]
-    }
-
     // MARK: - Lifecycle
 
     init() {
         // Discover available sensors on this Mac
         smc.discoverSensors()
 
+        // Resolve which keys work on this Mac
+        resolveSensorKeys()
+
         // Read fan count once at startup
-        fanCount = smc.readFanCount() ?? 2
-        print("[Sensors] Fan count: \(fanCount)")
+        if let count = smc.readUInt8(key: SMCKey.fanCount) {
+            fanCount = Int(count)
+        }
+        print("[Sensors] Fan count: \(fanCount), CPU=\(cpuKey), GPU=\(gpuKey), Kbd=\(kbdKey)")
 
         // Start polling
         startPolling()
@@ -58,13 +57,40 @@ final class SensorManager {
         stopPolling()
     }
 
+    // MARK: - Key Resolution
+
+    private func resolveSensorKeys() {
+        // CPU: try primary key, then alternates
+        if let found = smc.findWorkingKey(from: [
+            SMCKey.cpuComplex, SMCKey.cpuComplexAlt,
+            "Tp09", "Tp01", "Tp0T", "TC0D", "TC0P"
+        ]) {
+            cpuKey = found.key
+        }
+
+        // GPU: try primary key, then alternates
+        if let found = smc.findWorkingKey(from: [
+            SMCKey.gpuDie, SMCKey.gpuDieAlt,
+            "TG0P", "Tg0D"
+        ]) {
+            gpuKey = found.key
+        }
+
+        // Keyboard/palm rest: try primary key, then alternates
+        if let found = smc.findWorkingKey(from: [
+            SMCKey.keyboardTemp, SMCKey.keyboardTempAlt,
+            "Ts1P", "Ts1S"
+        ]) {
+            kbdKey = found.key
+        }
+    }
+
     // MARK: - Polling
 
     private func startPolling() {
         timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             self?.updateReadings()
         }
-        // Initial read
         updateReadings()
     }
 
@@ -77,20 +103,17 @@ final class SensorManager {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
 
-            // Read all values on background thread
             let f0 = self.smc.readFloat(key: SMCKey.fanActual0)
             let f1 = self.smc.readFloat(key: SMCKey.fanActual1)
-            let kbd = self.smc.readFloat(key: SMCKey.keyboardTemp)
-            let cpu = self.smc.readFloat(key: SMCKey.cpuComplex)
-            let gpu = self.smc.readFloat(key: SMCKey.gpuDie)
+            let kbd = self.smc.readFloat(key: self.kbdKey)
+            let cpu = self.smc.readFloat(key: self.cpuKey)
+            let gpu = self.smc.readFloat(key: self.gpuKey)
             let bat = self.smc.readFloat(key: SMCKey.batteryTemp)
 
-            // Debug: log first successful read cycle
             if self.nextHistoryID == 0 {
-                print("[Sensors] F0Ac=\(f0 as Any) F1Ac=\(f1 as Any) Ts0S=\(kbd as Any) TCXC=\(cpu as Any) TG0D=\(gpu as Any) TB1T=\(bat as Any)")
+                print("[Sensors] cpu(\(self.cpuKey))=\(cpu as Any) gpu(\(self.gpuKey))=\(gpu as Any) kbd(\(self.kbdKey))=\(kbd as Any) bat=\(bat as Any)")
             }
 
-            // Single batch update on main thread
             DispatchQueue.main.async {
                 if let v = f0 { self.fan0RPM = v }
                 if let v = f1 { self.fan1RPM = v }
@@ -101,7 +124,6 @@ final class SensorManager {
 
                 self.isThrottling = self.cpuTemp > 95
 
-                // Append history
                 let now = Date()
                 let id = self.nextHistoryID
                 self.nextHistoryID += 1

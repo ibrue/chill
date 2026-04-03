@@ -35,15 +35,19 @@ enum SMCKey {
     static let fanCount = "FNum"
 
     // MARK: - Temperature Sensors
+    // Keys vary by Mac model. These are the primary keys with fallbacks.
 
     /// Keyboard/palm rest temperature (primary sensor for Cool Keys profile)
-    static let keyboardTemp = "Ts0S"
-    /// CPU complex die temperature
-    static let cpuComplex = "TCXC"
+    static let keyboardTemp = "Ts0P"        // palm rest proximity
+    static let keyboardTempAlt = "Ts0S"     // palm rest (older models)
+    /// CPU temperature — Apple Silicon perf core
+    static let cpuComplex = "Tp09"          // perf core (Apple Silicon)
+    static let cpuComplexAlt = "TCXC"       // CPU complex (older/Intel)
     /// CPU proximity sensor
     static let cpuProximity = "TC0D"
     /// GPU die temperature
-    static let gpuDie = "TG0D"
+    static let gpuDie = "Tg05"              // GPU (Apple Silicon)
+    static let gpuDieAlt = "TG0D"           // GPU (older models)
     /// Battery temperature
     static let batteryTemp = "TB1T"
     /// Ambient temperature

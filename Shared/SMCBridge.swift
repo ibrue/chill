@@ -274,8 +274,29 @@ class SMCBridge {
 
         print("[SMC] === Sensor Discovery ===")
         for key in keysToProbe {
-            if let val = readFloat(key: key) {
-                print("[SMC]   \(key) = \(val)")
+            if let param = readSMC(key: key) {
+                let bytes = Array(param.getBytesArray().prefix(4))
+                let typeCode = param.keyInfo.dataType
+                let typeBytes = withUnsafeBytes(of: typeCode.bigEndian) { Array($0) }
+                let typeStr = String(bytes: typeBytes, encoding: .ascii) ?? "????"
+                let size = param.keyInfo.dataSize
+
+                let type = SMCType.fromTypeCode(typeCode)
+                var displayVal: String
+                switch type {
+                case .float32:
+                    displayVal = "\(floatFromSMCBytes(bytes)) (flt)"
+                case .sp78:
+                    let raw = Int16(bitPattern: UInt16(bytes[0]) << 8 | UInt16(bytes[1]))
+                    displayVal = "\(Float(raw) / 256.0) (sp78)"
+                case .uint8:
+                    displayVal = "\(bytes[0]) (ui8)"
+                case .uint16:
+                    displayVal = "\(UInt16(bytes[0]) << 8 | UInt16(bytes[1])) (ui16)"
+                default:
+                    displayVal = "bytes=\(bytes) type=\(typeStr)"
+                }
+                print("[SMC]   \(key) [\(typeStr) \(size)B] = \(displayVal)")
             }
         }
         print("[SMC] === End Discovery ===")

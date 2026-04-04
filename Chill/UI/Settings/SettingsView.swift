@@ -264,7 +264,7 @@ struct ProfilesSettingsView: View {
                     Text("New Profile")
                         .font(.system(size: 13, weight: .medium, design: .rounded))
                 }
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(Color.accentColor)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
                 .background(
@@ -428,7 +428,7 @@ struct AppRulesSettingsView: View {
                     Text("Add App Rule")
                         .font(.system(size: 13, weight: .medium, design: .rounded))
                 }
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(Color.accentColor)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
                 .background(

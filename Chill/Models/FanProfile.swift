@@ -166,7 +166,7 @@ struct FanProfile: Codable, Identifiable, Hashable {
             name: "Adaptive",
             subtitle: "Power-aware",
             description: "Automatically adjusts fan behavior based on your power state. Quiet on battery, aggressive when plugged in under load.",
-            sfSymbol: "arrow.trianglehead.2.counterclockwise",
+            sfSymbol: "arrow.2.squarepath",
             primarySensor: SMCKey.cpuComplex,
             curve: [
                 // Default/balanced curve (used as fallback)

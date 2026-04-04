@@ -164,6 +164,7 @@ struct MiniCurve: View {
 
 #Preview {
     ProfileSwitcher(profileEngine: ProfileEngine())
+        .environment(PowerMonitor())
         .padding()
         .frame(width: 300)
 }

@@ -438,7 +438,7 @@ struct AppRulesSettingsView: View {
                         Text("How it works")
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
                     }
-                    Text("When a matched app becomes frontmost, Chill automatically switches to its assigned fan profile. When you switch away, it returns to your previously selected profile.")
+                    Text("When a matched app becomes frontmost, Frostbyte automatically switches to its assigned fan profile. When you switch away, it returns to your previously selected profile.")
                         .font(.system(size: 11, design: .rounded))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -500,7 +500,7 @@ struct AboutSettingsView: View {
                     .font(.system(size: 32, weight: .light))
                     .foregroundStyle(.cyan)
 
-                Text("Chill")
+                Text("Frostbyte")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
 
                 Text("Smart fan control for Apple Silicon")

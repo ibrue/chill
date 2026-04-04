@@ -43,8 +43,7 @@ struct PopoverView: View {
                 }
             }
         }
-        .frame(width: 300)
-        .frame(minHeight: 420, maxHeight: 600)
+        .frame(width: 300, height: 480)
         .sheet(isPresented: $showSettings) {
             SettingsView()
         }
@@ -58,7 +57,7 @@ struct PopoverView: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.cyan)
 
-            Text("Chill")
+            Text("Frostbyte")
                 .font(.system(size: 16, weight: .bold, design: .rounded))
 
             Spacer()

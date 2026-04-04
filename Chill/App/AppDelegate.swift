@@ -36,7 +36,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func updateMenuBarText() {
+        guard let button = statusItem?.button else { return }
+        let showRPM = UserDefaults.standard.bool(forKey: "showRpmInMenuBar")
+        if showRPM {
+            let rpm = Int(sensorManager.fan0RPM)
+            button.image = nil
+            button.title = "\(rpm) RPM"
+            button.font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
+        } else {
+            button.title = ""
+            button.image = NSImage(systemSymbolName: "thermometer.snowflake", accessibilityDescription: "Frostbyte")
+        }
+    }
+
     private func applyActiveProfile() {
+        // Update menu bar RPM text
+        updateMenuBarText()
+
         // Sync power mode from PowerMonitor into ProfileEngine
         profileEngine.activePowerMode = powerMonitor.currentPowerMode
 
@@ -77,7 +94,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "thermometer.snowflake", accessibilityDescription: "Chill")
+            button.image = NSImage(systemSymbolName: "thermometer.snowflake", accessibilityDescription: "Frostbyte")
             button.action = #selector(togglePopover(_:))
             button.target = self
         }
@@ -93,7 +110,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover = NSPopover()
         popover?.behavior = .transient
         popover?.contentViewController = NSHostingController(rootView: popoverView)
-        popover?.contentSize = NSSize(width: 300, height: 420)
+        popover?.contentSize = NSSize(width: 300, height: 480)
     }
 
     @objc func togglePopover(_ sender: Any?) {

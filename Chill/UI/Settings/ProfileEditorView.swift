@@ -13,7 +13,7 @@ struct ProfileEditorView: View {
                 Picker("Icon", selection: $profile.sfSymbol) {
                     ForEach([
                         ("leaf.fill", "Auto"),
-                        ("keyboard.fill", "Keyboard"),
+                        ("arrow.trianglehead.2.counterclockwise", "Adaptive"),
                         ("gauge", "Balanced"),
                         ("moon.fill", "Whisper"),
                         ("bolt.fill", "Performance"),

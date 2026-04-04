@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProfileSwitcher: View {
     @Bindable var profileEngine: ProfileEngine
+    @Environment(PowerMonitor.self) var powerMonitor
     @State private var profiles = FanProfile.allBuiltIn
 
     var body: some View {
@@ -10,6 +11,7 @@ struct ProfileSwitcher: View {
                 ProfileCard(
                     profile: profile,
                     isSelected: profileEngine.activeProfile.id == profile.id,
+                    powerMode: profile.isAdaptive ? powerMonitor.currentPowerMode : nil,
                     action: {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                             profileEngine.switchProfile(profile)
@@ -26,6 +28,7 @@ struct ProfileSwitcher: View {
 struct ProfileCard: View {
     let profile: FanProfile
     let isSelected: Bool
+    var powerMode: PowerMode? = nil
     let action: () -> Void
 
     var body: some View {
@@ -48,17 +51,30 @@ struct ProfileCard: View {
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
                             .foregroundStyle(.primary)
 
-                        Text(profile.subtitle)
-                            .font(.system(size: 11, weight: .regular))
-                            .foregroundStyle(.secondary)
+                        if let powerMode, isSelected {
+                            HStack(spacing: 4) {
+                                Image(systemName: powerMode.sfSymbol)
+                                    .font(.system(size: 9))
+                                Text(powerMode.rawValue)
+                            }
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(accentColor)
+                        } else {
+                            Text(profile.subtitle)
+                                .font(.system(size: 11, weight: .regular))
+                                .foregroundStyle(.secondary)
+                        }
                     }
 
                     Spacer()
 
-                    // Mini curve
-                    MiniCurve(curve: profile.curve, accentColor: accentColor)
-                        .frame(width: 48, height: 24)
-                        .opacity(isSelected ? 1.0 : 0.4)
+                    // Mini curve (show active power mode curve for adaptive profiles)
+                    MiniCurve(
+                        curve: powerMode != nil ? profile.curve(for: powerMode!) : profile.curve,
+                        accentColor: accentColor
+                    )
+                    .frame(width: 48, height: 24)
+                    .opacity(isSelected ? 1.0 : 0.4)
 
                     // Selection indicator
                     if isSelected {
@@ -97,6 +113,7 @@ struct ProfileCard: View {
     private var accentColor: Color {
         switch profile.name {
         case "Auto": return .green
+        case "Adaptive": return .teal
         case "Balanced": return .blue
         case "Whisper": return .purple
         case "Performance": return .orange

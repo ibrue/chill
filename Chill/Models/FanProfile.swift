@@ -13,6 +13,22 @@ struct TempCurvePoint: Codable, Identifiable, Hashable {
     }
 }
 
+// MARK: - Power Mode (for Adaptive profile)
+
+enum PowerMode: String, Codable, CaseIterable {
+    case lowPower = "Low Power"
+    case balanced = "Balanced"
+    case highPerformance = "High Performance"
+
+    var sfSymbol: String {
+        switch self {
+        case .lowPower: return "battery.25percent"
+        case .balanced: return "battery.75percent"
+        case .highPerformance: return "bolt.fill"
+        }
+    }
+}
+
 // MARK: - Fan Profile
 
 struct FanProfile: Codable, Identifiable, Hashable {
@@ -28,6 +44,16 @@ struct FanProfile: Codable, Identifiable, Hashable {
     var appTriggers: [String]    // Bundle IDs
     var isBuiltIn: Bool
 
+    // Adaptive profile: power-mode-specific curves
+    var adaptiveCurves: [String: [TempCurvePoint]]?  // PowerMode.rawValue -> curve
+
+    var isAdaptive: Bool { adaptiveCurves != nil }
+
+    /// Returns the curve for a given power mode, falling back to the default curve
+    func curve(for powerMode: PowerMode) -> [TempCurvePoint] {
+        adaptiveCurves?[powerMode.rawValue] ?? curve
+    }
+
     init(
         id: UUID = UUID(),
         name: String,
@@ -39,7 +65,8 @@ struct FanProfile: Codable, Identifiable, Hashable {
         curve: [TempCurvePoint],
         hysteresisDegrees: Float = 3.0,
         appTriggers: [String] = [],
-        isBuiltIn: Bool = false
+        isBuiltIn: Bool = false,
+        adaptiveCurves: [String: [TempCurvePoint]]? = nil
     ) {
         self.id = id
         self.name = name
@@ -52,6 +79,7 @@ struct FanProfile: Codable, Identifiable, Hashable {
         self.hysteresisDegrees = hysteresisDegrees
         self.appTriggers = appTriggers
         self.isBuiltIn = isBuiltIn
+        self.adaptiveCurves = adaptiveCurves
     }
 
     // MARK: - Built-in Profiles
@@ -132,11 +160,54 @@ struct FanProfile: Codable, Identifiable, Hashable {
         )
     }
 
+    /// Adaptive - automatically shifts fan curve based on power state
+    static var adaptive: FanProfile {
+        FanProfile(
+            name: "Adaptive",
+            subtitle: "Power-aware",
+            description: "Automatically adjusts fan behavior based on your power state. Quiet on battery, aggressive when plugged in under load.",
+            sfSymbol: "arrow.trianglehead.2.counterclockwise",
+            primarySensor: SMCKey.cpuComplex,
+            curve: [
+                // Default/balanced curve (used as fallback)
+                TempCurvePoint(temp: 30, rpmPercent: 0.25),
+                TempCurvePoint(temp: 45, rpmPercent: 0.40),
+                TempCurvePoint(temp: 60, rpmPercent: 0.55),
+                TempCurvePoint(temp: 75, rpmPercent: 0.75),
+                TempCurvePoint(temp: 90, rpmPercent: 1.00),
+            ],
+            isBuiltIn: true,
+            adaptiveCurves: [
+                PowerMode.lowPower.rawValue: [
+                    TempCurvePoint(temp: 30, rpmPercent: 0.10),
+                    TempCurvePoint(temp: 50, rpmPercent: 0.20),
+                    TempCurvePoint(temp: 70, rpmPercent: 0.35),
+                    TempCurvePoint(temp: 85, rpmPercent: 0.70),
+                    TempCurvePoint(temp: 95, rpmPercent: 1.00),
+                ],
+                PowerMode.balanced.rawValue: [
+                    TempCurvePoint(temp: 30, rpmPercent: 0.25),
+                    TempCurvePoint(temp: 45, rpmPercent: 0.40),
+                    TempCurvePoint(temp: 60, rpmPercent: 0.55),
+                    TempCurvePoint(temp: 75, rpmPercent: 0.75),
+                    TempCurvePoint(temp: 90, rpmPercent: 1.00),
+                ],
+                PowerMode.highPerformance.rawValue: [
+                    TempCurvePoint(temp: 30, rpmPercent: 0.35),
+                    TempCurvePoint(temp: 40, rpmPercent: 0.55),
+                    TempCurvePoint(temp: 55, rpmPercent: 0.75),
+                    TempCurvePoint(temp: 70, rpmPercent: 0.90),
+                    TempCurvePoint(temp: 80, rpmPercent: 1.00),
+                ],
+            ]
+        )
+    }
+
     // MARK: - Persistence
 
     /// Load all built-in profiles
     static var allBuiltIn: [FanProfile] {
-        [.auto, .balanced, .whisper, .performance]
+        [.auto, .adaptive, .balanced, .whisper, .performance]
     }
 
     /// Load a profile by ID

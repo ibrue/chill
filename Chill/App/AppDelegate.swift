@@ -5,6 +5,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var controlTimer: Timer?
+    private var eventMonitor: Any?
 
     // Core objects owned by AppDelegate — injected into SwiftUI environment
     let sensorManager = SensorManager()
@@ -22,6 +23,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         controlTimer?.invalidate()
+        if let eventMonitor { NSEvent.removeMonitor(eventMonitor) }
         // Return to auto mode on quit
         fanController.setAutoMode { _ in }
     }
@@ -35,6 +37,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func applyActiveProfile() {
+        // Sync power mode from PowerMonitor into ProfileEngine
+        profileEngine.activePowerMode = powerMonitor.currentPowerMode
+
         let profile = profileEngine.activeProfile
 
         // Auto profile = let macOS handle it
@@ -95,9 +100,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let button = statusItem?.button, let popover else { return }
 
         if popover.isShown {
-            popover.performClose(sender)
+            closePopover()
         } else {
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            // Monitor clicks outside the popover to dismiss it
+            eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+                self?.closePopover()
+            }
+        }
+    }
+
+    private func closePopover() {
+        popover?.performClose(nil)
+        if let eventMonitor {
+            NSEvent.removeMonitor(eventMonitor)
+            self.eventMonitor = nil
         }
     }
 

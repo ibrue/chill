@@ -5,6 +5,7 @@ import Observation
 @Observable
 final class ProfileEngine {
     var activeProfile: FanProfile = .auto
+    var activePowerMode: PowerMode = .balanced
     private var lastRPMDecreaseTime: Date = Date()
 
     // MARK: - Profile Evaluation
@@ -45,6 +46,31 @@ final class ProfileEngine {
         return maxRPM * 0.5
     }
 
+    /// Compute target RPM using the adaptive curve for the current power mode
+    func computeTargetRPM(for temp: Float, maxRPM: Float = 8000, profile: FanProfile, powerMode: PowerMode) -> Float {
+        let curve = profile.curve(for: powerMode).sorted { $0.tempCelsius < $1.tempCelsius }
+
+        guard !curve.isEmpty else { return maxRPM * 0.3 }
+
+        if temp <= curve[0].tempCelsius {
+            return maxRPM * curve[0].rpmPercent
+        }
+        if temp >= curve[curve.count - 1].tempCelsius {
+            return maxRPM * curve[curve.count - 1].rpmPercent
+        }
+
+        for i in 0..<(curve.count - 1) {
+            let current = curve[i]
+            let next = curve[i + 1]
+            if temp >= current.tempCelsius && temp < next.tempCelsius {
+                let ratio = (temp - current.tempCelsius) / (next.tempCelsius - current.tempCelsius)
+                let rpmPercent = current.rpmPercent + ratio * (next.rpmPercent - current.rpmPercent)
+                return maxRPM * rpmPercent
+            }
+        }
+        return maxRPM * 0.5
+    }
+
     /// Evaluate sensors and apply hysteresis
     /// - Parameters:
     ///   - sensors: Current sensor readings
@@ -56,7 +82,12 @@ final class ProfileEngine {
         // Pick primary sensor value
         let temp = sensors.value(for: profile.primarySensor)
 
-        var targetRPM = computeTargetRPM(for: temp, maxRPM: fanMax, profile: profile)
+        var targetRPM: Float
+        if profile.isAdaptive {
+            targetRPM = computeTargetRPM(for: temp, maxRPM: fanMax, profile: profile, powerMode: activePowerMode)
+        } else {
+            targetRPM = computeTargetRPM(for: temp, maxRPM: fanMax, profile: profile)
+        }
 
         // Apply hysteresis: only allow RPM increases immediately,
         // but delay decreases by checking elapsed time

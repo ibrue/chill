@@ -37,7 +37,7 @@ enum SMCKey {
     // MARK: - Temperature Sensors
     // Keys vary by Mac model. These are the primary keys with fallbacks.
 
-    /// Keyboard/palm rest temperature (primary sensor for Cool Keys profile)
+    /// Keyboard/palm rest temperature
     static let keyboardTemp = "Ts0P"        // palm rest proximity
     static let keyboardTempAlt = "Ts0S"     // palm rest (older models)
     /// CPU temperature — Apple Silicon perf core

@@ -13,6 +13,7 @@ final class PowerMonitor {
     var isCharging: Bool = false
     var estimatedWatts: Float = 0
     var suggestedProfileOverride: String?
+    var currentPowerMode: PowerMode = .balanced
 
     // MARK: - History (rolling 60 samples = ~5 min at 5s interval)
 
@@ -96,6 +97,15 @@ final class PowerMonitor {
                 self.batteryPercent = percent
                 self.isCharging = charging
                 self.estimatedWatts = watts
+
+                // Determine power mode for Adaptive profile
+                if !onAC && percent < 30 {
+                    self.currentPowerMode = .lowPower
+                } else if onAC && watts > 15 {
+                    self.currentPowerMode = .highPerformance
+                } else {
+                    self.currentPowerMode = .balanced
+                }
 
                 // Suggest profile based on power state
                 if onAC && !charging {

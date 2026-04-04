@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import UserNotifications
 
 /// Manages real-time SMC sensor readings
 /// No root required for reads on Apple Silicon
@@ -24,6 +25,7 @@ final class SensorManager {
     var batteryTemp: Float = 0
     var fanCount: Int = 1
     var isThrottling: Bool = false
+    private var lastThrottleNotification: Date = .distantPast
 
     // MARK: - History (rolling 60 samples = ~2 min at 2s interval)
 
@@ -48,6 +50,9 @@ final class SensorManager {
             fanCount = Int(count)
         }
         print("[Sensors] Fan count: \(fanCount), CPU=\(cpuKey), GPU=\(gpuKey), Kbd=\(kbdKey)")
+
+        // Request notification permission
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
 
         // Start polling
         startPolling()
@@ -99,6 +104,15 @@ final class SensorManager {
         timer = nil
     }
 
+    private func sendThrottleNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "Thermal Throttling Detected"
+        content.body = String(format: "CPU temperature is %.0f\u{00B0}C. Consider switching to Performance profile for maximum cooling.", cpuTemp)
+        content.sound = .default
+        let request = UNNotificationRequest(identifier: "thermal-throttle", content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
+    }
+
     private func updateReadings() {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
@@ -124,7 +138,17 @@ final class SensorManager {
                 if let v = gpu { self.gpuTemp = self.gpuTemp == 0 ? v : self.gpuTemp * (1 - a) + v * a }
                 if let v = bat { self.batteryTemp = v }  // battery temp is stable, no smoothing needed
 
+                let wasThrottling = self.isThrottling
                 self.isThrottling = self.cpuTemp > 95
+
+                // Send throttle notification (at most once per 5 minutes)
+                if self.isThrottling && !wasThrottling {
+                    let now = Date()
+                    if now.timeIntervalSince(self.lastThrottleNotification) > 300 {
+                        self.lastThrottleNotification = now
+                        self.sendThrottleNotification()
+                    }
+                }
 
                 let now = Date()
                 let id = self.nextHistoryID

@@ -74,27 +74,6 @@ struct FanProfile: Codable, Identifiable, Hashable {
         )
     }
 
-    /// Cool Keys - aggressive keyboard sensor monitoring
-    /// Ramps up early to keep palm rest cool during typing
-    static var coolKeys: FanProfile {
-        FanProfile(
-            name: "Cool Keys",
-            subtitle: "Keyboard comfort",
-            description: "Watches the palm rest sensor and ramps fans 10\u{00B0}C earlier than Apple. Keeps your keyboard cool while typing.",
-            sfSymbol: "keyboard.fill",
-            primarySensor: SMCKey.keyboardTemp,
-            fallbackSensors: [SMCKey.cpuComplex],
-            curve: [
-                TempCurvePoint(temp: 35, rpmPercent: 0.30),
-                TempCurvePoint(temp: 40, rpmPercent: 0.55),
-                TempCurvePoint(temp: 45, rpmPercent: 0.80),
-                TempCurvePoint(temp: 50, rpmPercent: 1.00),
-            ],
-            hysteresisDegrees: 2.0,
-            isBuiltIn: true
-        )
-    }
-
     /// Balanced - sensible default for everyday use
     static var balanced: FanProfile {
         FanProfile(
@@ -157,7 +136,7 @@ struct FanProfile: Codable, Identifiable, Hashable {
 
     /// Load all built-in profiles
     static var allBuiltIn: [FanProfile] {
-        [.auto, .coolKeys, .balanced, .whisper, .performance]
+        [.auto, .balanced, .whisper, .performance]
     }
 
     /// Load a profile by ID

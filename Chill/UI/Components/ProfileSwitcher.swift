@@ -97,7 +97,6 @@ struct ProfileCard: View {
     private var accentColor: Color {
         switch profile.name {
         case "Auto": return .green
-        case "Cool Keys": return .cyan
         case "Balanced": return .blue
         case "Whisper": return .purple
         case "Performance": return .orange

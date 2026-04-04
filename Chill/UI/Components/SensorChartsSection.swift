@@ -26,8 +26,6 @@ struct SensorChartsSection: View {
                     Text("\(Int(sensorManager.fan0RPM)) RPM")
                         .font(.system(size: 10, weight: .semibold, design: .rounded))
                         .foregroundStyle(.primary)
-                        .contentTransition(.numericText())
-                        .animation(.spring(response: 0.3), value: Int(sensorManager.fan0RPM))
                 }
 
                 SensorSparkline(
@@ -59,8 +57,6 @@ struct SensorChartsSection: View {
                     Text(String(format: "%.0fW", powerMonitor.estimatedWatts))
                         .font(.system(size: 10, weight: .semibold, design: .rounded))
                         .foregroundStyle(.primary)
-                        .contentTransition(.numericText())
-                        .animation(.spring(response: 0.3), value: Int(powerMonitor.estimatedWatts))
                 }
 
                 SensorSparkline(

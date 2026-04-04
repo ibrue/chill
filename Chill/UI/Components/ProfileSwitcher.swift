@@ -3,7 +3,7 @@ import SwiftUI
 struct ProfileSwitcher: View {
     @Bindable var profileEngine: ProfileEngine
     @Environment(PowerMonitor.self) var powerMonitor
-    @State private var profiles = FanProfile.allBuiltIn
+    @State private var profiles = FanProfile.allBuiltIn + FanProfile.allCustom()
 
     var body: some View {
         VStack(spacing: 10) {
@@ -19,6 +19,9 @@ struct ProfileSwitcher: View {
                     }
                 )
             }
+        }
+        .onAppear {
+            profiles = FanProfile.allBuiltIn + FanProfile.allCustom()
         }
     }
 }

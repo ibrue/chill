@@ -111,6 +111,7 @@ struct ProfileEditorView: View {
 
 struct NewProfileView: View {
     @State private var name = "Custom Profile"
+    @State private var subtitle = "Custom"
     @State private var icon = "fan.fill"
     @Environment(\.dismiss) var dismiss
     let onSave: (FanProfile) -> Void
@@ -119,6 +120,7 @@ struct NewProfileView: View {
         Form {
             Section("New Profile") {
                 TextField("Name", text: $name)
+                TextField("Subtitle", text: $subtitle)
 
                 Picker("Icon", selection: $icon) {
                     ForEach([
@@ -140,6 +142,7 @@ struct NewProfileView: View {
             Button(action: {
                 let profile = FanProfile(
                     name: name,
+                    subtitle: subtitle,
                     sfSymbol: icon,
                     curve: [
                         TempCurvePoint(temp: 40, rpmPercent: 0.3),

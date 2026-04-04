@@ -102,6 +102,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if popover.isShown {
             closePopover()
         } else {
+            sensorManager.isPopoverVisible = true
+            powerMonitor.isPopoverVisible = true
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             // Monitor clicks outside the popover to dismiss it
             eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
@@ -112,6 +114,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func closePopover() {
         popover?.performClose(nil)
+        sensorManager.isPopoverVisible = false
+        powerMonitor.isPopoverVisible = false
         if let eventMonitor {
             NSEvent.removeMonitor(eventMonitor)
             self.eventMonitor = nil

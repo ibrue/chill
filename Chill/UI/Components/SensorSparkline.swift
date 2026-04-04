@@ -45,7 +45,6 @@ struct SensorSparkline: View {
             .chartYAxis(.hidden)
             .chartYScale(domain: computedDomain)
             .frame(height: 44)
-            .animation(.easeInOut(duration: 0.3), value: data.count)
         }
     }
 

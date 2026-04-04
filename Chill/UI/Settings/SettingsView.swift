@@ -209,8 +209,10 @@ struct SettingsToggleRow: View {
 // MARK: - Profiles Settings
 
 struct ProfilesSettingsView: View {
+    @Environment(ProfileEngine.self) var profileEngine
     @State private var customProfiles = FanProfile.allCustom()
     @State private var showAddProfile = false
+    @State private var editingProfile: FanProfile?
 
     var body: some View {
         VStack(spacing: 14) {
@@ -243,6 +245,19 @@ struct ProfilesSettingsView: View {
                                 ProfileSettingsRow(profile: profile)
 
                                 Button(action: {
+                                    editingProfile = profile
+                                }) {
+                                    Image(systemName: "pencil")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+
+                                Button(action: {
+                                    // If deleting the active profile, fall back to Auto
+                                    if profileEngine.activeProfile.id == profile.id {
+                                        profileEngine.switchProfile(.auto)
+                                    }
                                     FanProfile.delete(withID: profile.id)
                                     customProfiles.removeAll { $0.id == profile.id }
                                 }) {
@@ -278,6 +293,15 @@ struct ProfilesSettingsView: View {
                     customProfiles.append(newProfile)
                     newProfile.save()
                 }
+            }
+            .sheet(item: $editingProfile) { profile in
+                NavigationStack {
+                    ProfileEditorView(profile: profile)
+                }
+                .frame(minWidth: 400, minHeight: 400)
+            }
+            .onAppear {
+                customProfiles = FanProfile.allCustom()
             }
         }
     }

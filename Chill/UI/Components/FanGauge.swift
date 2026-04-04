@@ -38,7 +38,6 @@ struct FanGauge: View {
                         style: StrokeStyle(lineWidth: 8, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: rpm)
 
                 // Center text
                 VStack(spacing: 4) {

@@ -227,18 +227,23 @@ struct FanProfile: Codable, Identifiable, Hashable {
         return nil
     }
 
-    /// Save a custom profile
+    /// Save a custom profile (upserts into the shared customProfiles array)
     func save() {
-        if !isBuiltIn {
-            if let encoded = try? JSONEncoder().encode(self) {
-                UserDefaults(suiteName: ChillConstants.suiteName)?.set(encoded, forKey: "profile_\(id)")
-            }
+        guard !isBuiltIn else { return }
+        var profiles = FanProfile.allCustom()
+        if let index = profiles.firstIndex(where: { $0.id == id }) {
+            profiles[index] = self
+        } else {
+            profiles.append(self)
         }
+        FanProfile.saveAllCustom(profiles)
     }
 
     /// Delete a profile
     static func delete(withID id: UUID) {
-        UserDefaults(suiteName: ChillConstants.suiteName)?.removeObject(forKey: "profile_\(id)")
+        var profiles = allCustom()
+        profiles.removeAll { $0.id == id }
+        saveAllCustom(profiles)
     }
 
     /// Get all custom profiles
@@ -249,6 +254,13 @@ struct FanProfile: Codable, Identifiable, Hashable {
             }
         }
         return []
+    }
+
+    /// Persist the full custom profiles array
+    private static func saveAllCustom(_ profiles: [FanProfile]) {
+        if let encoded = try? JSONEncoder().encode(profiles) {
+            UserDefaults(suiteName: ChillConstants.suiteName)?.set(encoded, forKey: "customProfiles")
+        }
     }
 }
 

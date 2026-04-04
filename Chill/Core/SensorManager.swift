@@ -15,6 +15,15 @@ final class SensorManager {
     private var gpuKey: String = SMCKey.gpuDie
     private var kbdKey: String = SMCKey.keyboardTemp
 
+    // MARK: - Popover Visibility (controls polling rate + history updates)
+
+    var isPopoverVisible: Bool = false {
+        didSet {
+            guard oldValue != isPopoverVisible else { return }
+            restartPolling()
+        }
+    }
+
     // MARK: - Published Values
 
     var fan0RPM: Float = 0
@@ -27,7 +36,7 @@ final class SensorManager {
     var isThrottling: Bool = false
     private var lastThrottleNotification: Date = .distantPast
 
-    // MARK: - History (rolling 60 samples = ~2 min at 2s interval)
+    // MARK: - History (rolling 60 samples)
 
     private static let maxHistoryCount = 60
     private var nextHistoryID = 0
@@ -54,7 +63,7 @@ final class SensorManager {
         // Request notification permission
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
 
-        // Start polling
+        // Start polling (slow rate — popover is initially hidden)
         startPolling()
     }
 
@@ -92,11 +101,20 @@ final class SensorManager {
 
     // MARK: - Polling
 
+    private var pollingInterval: TimeInterval {
+        isPopoverVisible ? 2.0 : 5.0
+    }
+
     private func startPolling() {
-        timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: pollingInterval, repeats: true) { [weak self] _ in
             self?.updateReadings()
         }
         updateReadings()
+    }
+
+    private func restartPolling() {
+        stopPolling()
+        startPolling()
     }
 
     private func stopPolling() {
@@ -150,6 +168,9 @@ final class SensorManager {
                     }
                 }
 
+                // Only update history arrays when popover is visible (Charts are expensive)
+                guard self.isPopoverVisible else { return }
+
                 let now = Date()
                 let id = self.nextHistoryID
                 self.nextHistoryID += 1
@@ -159,9 +180,9 @@ final class SensorManager {
                 self.cpuTempHistory.append(TimestampedValue(id: id, date: now, value: self.cpuTemp))
 
                 let max = Self.maxHistoryCount
-                if self.fan0History.count > max { self.fan0History.removeFirst() }
-                if self.fan1History.count > max { self.fan1History.removeFirst() }
-                if self.cpuTempHistory.count > max { self.cpuTempHistory.removeFirst() }
+                if self.fan0History.count > max { self.fan0History = Array(self.fan0History.suffix(max)) }
+                if self.fan1History.count > max { self.fan1History = Array(self.fan1History.suffix(max)) }
+                if self.cpuTempHistory.count > max { self.cpuTempHistory = Array(self.cpuTempHistory.suffix(max)) }
             }
         }
     }

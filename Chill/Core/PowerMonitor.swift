@@ -8,6 +8,8 @@ final class PowerMonitor {
     private let smc = globalSMCBridge
     private var timer: Timer?
 
+    var isPopoverVisible: Bool = false
+
     var isOnAC: Bool = false
     var batteryPercent: Int = 100
     var isCharging: Bool = false
@@ -116,12 +118,14 @@ final class PowerMonitor {
                     self.suggestedProfileOverride = nil
                 }
 
-                // Append history
+                // Only append history when popover is visible (Charts are expensive)
+                guard self.isPopoverVisible else { return }
+
                 let id = self.nextHistoryID
                 self.nextHistoryID += 1
                 self.wattsHistory.append(TimestampedValue(id: id, date: Date(), value: self.estimatedWatts))
                 if self.wattsHistory.count > Self.maxHistoryCount {
-                    self.wattsHistory.removeFirst()
+                    self.wattsHistory = Array(self.wattsHistory.suffix(Self.maxHistoryCount))
                 }
             }
         }

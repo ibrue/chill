@@ -57,7 +57,7 @@ struct PopoverView: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.cyan)
 
-            Text("Frostbyte")
+            Text("Chill")
                 .font(.system(size: 16, weight: .bold, design: .rounded))
 
             Spacer()

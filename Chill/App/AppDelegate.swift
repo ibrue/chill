@@ -46,7 +46,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
         } else {
             button.title = ""
-            button.image = NSImage(systemSymbolName: "thermometer.snowflake", accessibilityDescription: "Frostbyte")
+            button.image = NSImage(systemSymbolName: "thermometer.snowflake", accessibilityDescription: "Chill")
         }
     }
 
@@ -94,7 +94,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "thermometer.snowflake", accessibilityDescription: "Frostbyte")
+            button.image = NSImage(systemSymbolName: "thermometer.snowflake", accessibilityDescription: "Chill")
             button.action = #selector(togglePopover(_:))
             button.target = self
         }

@@ -148,7 +148,7 @@ final class SensorManager {
 
             DispatchQueue.main.async {
                 // Exponential moving average to smooth jittery readings
-                let a: Float = 0.4  // smoothing factor (lower = smoother)
+                let a: Float = 0.25  // smoothing factor (lower = smoother)
                 if let v = f0 { self.fan0RPM = self.fan0RPM == 0 ? v : self.fan0RPM * (1 - a) + v * a }
                 if let v = f1 { self.fan1RPM = self.fan1RPM == 0 ? v : self.fan1RPM * (1 - a) + v * a }
                 if let v = kbd { self.keyboardTemp = self.keyboardTemp == 0 ? v : self.keyboardTemp * (1 - a) + v * a }

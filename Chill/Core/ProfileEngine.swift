@@ -6,7 +6,11 @@ import Observation
 final class ProfileEngine {
     var activeProfile: FanProfile = .auto
     var activePowerMode: PowerMode = .balanced
-    private var lastRPMDecreaseTime: Date = Date()
+    private var smoothedRPM: Float?
+
+    // Slew rate limits (RPM change per 2-second control tick)
+    private let rampUpPerTick: Float = 400    // 200 RPM/sec — responsive to heat
+    private let rampDownPerTick: Float = 200  // 100 RPM/sec — slow, smooth wind-down
 
     // MARK: - Profile Evaluation
 
@@ -71,49 +75,40 @@ final class ProfileEngine {
         return maxRPM * 0.5
     }
 
-    /// Evaluate sensors and apply hysteresis
-    /// - Parameters:
-    ///   - sensors: Current sensor readings
-    ///   - fanMax: Maximum RPM for the fan
-    /// - Returns: Recommended target RPM
+    /// Evaluate sensors and apply slew-rate limiting for smooth transitions
     func evaluate(sensors: SensorReading, fanMax: Float) -> Float {
         let profile = activeProfile
-
-        // Pick primary sensor value
         let temp = sensors.value(for: profile.primarySensor)
 
-        var targetRPM: Float
+        let rawTarget: Float
         if profile.isAdaptive {
-            targetRPM = computeTargetRPM(for: temp, maxRPM: fanMax, profile: profile, powerMode: activePowerMode)
+            rawTarget = computeTargetRPM(for: temp, maxRPM: fanMax, profile: profile, powerMode: activePowerMode)
         } else {
-            targetRPM = computeTargetRPM(for: temp, maxRPM: fanMax, profile: profile)
+            rawTarget = computeTargetRPM(for: temp, maxRPM: fanMax, profile: profile)
         }
 
-        // Apply hysteresis: only allow RPM increases immediately,
-        // but delay decreases by checking elapsed time
-        let now = Date()
-        let timeSinceLastDecrease = now.timeIntervalSince(lastRPMDecreaseTime)
-
-        if targetRPM < (sensors.lastComputedRPM ?? targetRPM) {
-            // We want to decrease RPM
-            if timeSinceLastDecrease > Double(profile.hysteresisDegrees) {
-                // Enough time has passed; allow the decrease
-                lastRPMDecreaseTime = now
-            } else {
-                // Maintain previous RPM
-                targetRPM = sensors.lastComputedRPM ?? targetRPM
-            }
-        } else {
-            // Increase: apply immediately
-            lastRPMDecreaseTime = now
+        // First tick or after profile switch: seed directly
+        guard let current = smoothedRPM else {
+            smoothedRPM = rawTarget
+            return rawTarget
         }
 
-        return targetRPM
+        // Slew rate limit: cap RPM change per tick
+        let delta = rawTarget - current
+        let clamped: Float
+        if delta > 0 {
+            clamped = current + min(delta, rampUpPerTick)
+        } else {
+            clamped = current + max(delta, -rampDownPerTick)
+        }
+
+        smoothedRPM = clamped
+        return clamped
     }
 
     /// Switch active profile
     func switchProfile(_ profile: FanProfile) {
         activeProfile = profile
-        lastRPMDecreaseTime = Date()
+        smoothedRPM = nil  // re-seed on next tick
     }
 }

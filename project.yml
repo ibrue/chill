@@ -11,6 +11,7 @@ schemes:
     build:
       targets:
         Chill: all
+        ChillHelper: all
   ChillHelper:
     build:
       targets:
@@ -32,6 +33,7 @@ targets:
     dependencies:
       - target: ChillHelper
         embed: false
+        link: false
     settings:
       MACOSX_DEPLOYMENT_TARGET: "14.0"
       SWIFT_VERSION: "5.9"

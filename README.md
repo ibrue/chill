@@ -4,11 +4,10 @@ A beautiful, minimal menu bar app for controlling Apple Silicon Mac fans via SMC
 
 ## Features
 
-- **Auto Profile**: System manages fans automatically
-- **Cool Keys**: Aggressive keyboard sensor monitoring with early ramp-up
-- **Balanced**: Mid-range efficiency curve
-- **Whisper**: Ultra-quiet operation
-- **Performance**: Maximum cooling for sustained workloads
+- **Auto**: Mirrors macOS — no intervention
+- **Chill 4°**: macOS default curve, ramps 4°C earlier
+- **Chill 8°**: macOS default curve, ramps 8°C earlier (the flagship)
+- **Performance**: Aggressive ramp for sustained workloads, prevents throttling
 - **App Rules**: Automatically switch profiles when specific apps launch
 - **Real-time Monitoring**: Temperature, RPM, power draw
 - **Liquid Glass UI**: Modern glassmorphism on macOS 14+
@@ -71,7 +70,7 @@ A beautiful, minimal menu bar app for controlling Apple Silicon Mac fans via SMC
 - **F0Md/F1Md**: Fan mode (0=auto, 1=manual)
 - **F0Tg/F1Tg**: Fan target RPM (IEEE 754 float, little-endian)
 - **F0Ac/F1Ac**: Fan actual RPM
-- **Ts0S**: Keyboard/palm rest temperature (primary Cool Keys sensor)
+- **Ts0S**: Keyboard/palm rest temperature
 - **TC0D, TG0D, TA0P, TB1T**: Other sensors
 
 All SMC writes require root; reads work without elevation on Apple Silicon.
@@ -99,6 +98,10 @@ In Settings > Profiles, click + to create a custom profile:
 
 **Temperature readings wrong:**
 - Sensor keys vary slightly by Mac model. Edit `SMCKeys.swift` if needed
+
+## App Icon
+
+`Chill/Assets.xcassets/AppIcon.appiconset/` ships with the slot manifest but **no PNG renders yet**. Drop in `icon_16x16.png` … `icon_512x512@2x.png` (10 files total) before shipping. Until then Xcode will show "Missing AppIcon" warnings; that's expected.
 
 ## License
 

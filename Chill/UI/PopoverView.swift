@@ -21,12 +21,7 @@ struct PopoverView: View {
             VStack(spacing: 12) {
                 // Header
                 HStack {
-                    Image(systemName: "snowflake.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.cyan)
-
-                    Text("Chill")
-                        .font(.system(size: 18, weight: .semibold))
+                    BrandMark(size: .small)
 
                     Spacer()
 

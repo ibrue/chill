@@ -13,9 +13,8 @@ struct ProfileEditorView: View {
                 Picker("Icon", selection: $profile.sfSymbol) {
                     ForEach([
                         ("leaf.fill", "Auto"),
-                        ("keyboard.fill", "Cool Keys"),
-                        ("gauge", "Balanced"),
-                        ("moon.fill", "Whisper"),
+                        ("snowflake", "Chill 4°"),
+                        ("snowflake.circle.fill", "Chill 8°"),
                         ("bolt.fill", "Performance"),
                     ], id: \.0) { value, label in
                         HStack {
@@ -158,6 +157,6 @@ struct NewProfileView: View {
 
 #Preview {
     NavigationStack {
-        ProfileEditorView(profile: .balanced)
+        ProfileEditorView(profile: .chill4)
     }
 }

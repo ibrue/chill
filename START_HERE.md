@@ -6,7 +6,7 @@ Welcome to Chill, a complete macOS menu bar app for intelligent fan control on A
 
 Chill is a sophisticated fan control application that:
 - Displays real-time fan RPM and temperature via an arc gauge
-- Supports 5 intelligent profiles (Auto, Cool Keys, Balanced, Whisper, Performance)
+- Supports 4 profiles: Auto (macOS default), Chill 4°, Chill 8°, Performance
 - Automatically switches profiles when specific apps launch
 - Runs a privileged helper daemon that maintains SMC control
 - Provides a clean, modern glassmorphic UI
@@ -87,13 +87,12 @@ Chill uses a two-target architecture:
 
 **Why two targets?** This keeps the app simple and sandboxable while delegating privileged operations to a minimal daemon.
 
-## Five Built-in Profiles
+## Four Built-in Profiles
 
-1. **Auto** - System handles fan control (default)
-2. **Cool Keys** - Aggressive keyboard sensor monitoring (early ramp-up at 40°C)
-3. **Balanced** - Sensible everyday curve (mid-range efficiency)
-4. **Whisper** - Ultra-quiet operation (minimal fan usage)
-5. **Performance** - Maximum cooling for sustained loads
+1. **Auto** - Mirrors macOS default thermal behavior
+2. **Chill 4°** - macOS default curve, shifted 4°C earlier
+3. **Chill 8°** - macOS default curve, shifted 8°C earlier (flagship)
+4. **Performance** - Aggressive ramp for sustained loads, prevents throttling
 
 All profiles support:
 - Sensor selection (keyboard, CPU, GPU, etc.)

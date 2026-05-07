@@ -23,7 +23,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "thermometer.snowflake", accessibilityDescription: "Chill")
+            button.image = NSImage(systemSymbolName: Brand.menuBarSymbol, accessibilityDescription: Brand.name)
             button.action = #selector(togglePopover(_:))
             button.target = self
         }

@@ -5,16 +5,7 @@ struct TempPill: View {
     let temp: Float
     let label: String
 
-    private var color: Color {
-        switch temp {
-        case ..<50:
-            return .cyan
-        case 50..<70:
-            return .orange
-        default:
-            return .red
-        }
-    }
+    private var color: Color { Brand.tempColor(temp) }
 
     var body: some View {
         VStack(spacing: 4) {
@@ -33,7 +24,7 @@ struct TempPill: View {
             .cornerRadius(8)
 
             Text(label)
-                .font(.system(size: 9, weight: .medium))
+                .font(.system(size: 9, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)

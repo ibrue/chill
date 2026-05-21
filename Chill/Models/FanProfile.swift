@@ -64,54 +64,46 @@ struct FanProfile: Codable, Identifiable, Hashable {
     }
 
     /// Auto - pass-through, mirrors thermalmonitord
-    static var auto: FanProfile {
-        FanProfile(
-            name: "Auto",
-            sfSymbol: "leaf.fill",
-            primarySensor: SMCKey.cpuComplex,
-            curve: autoCurve,
-            isBuiltIn: true
-        )
-    }
+    static let auto = FanProfile(
+        name: "Auto",
+        sfSymbol: "leaf.fill",
+        primarySensor: SMCKey.cpuComplex,
+        curve: autoCurve,
+        isBuiltIn: true
+    )
 
     /// Chill 4° - macOS default curve, ramps 4°C earlier
-    static var chill4: FanProfile {
-        FanProfile(
-            name: "Chill 4°",
-            sfSymbol: "snowflake",
-            primarySensor: SMCKey.cpuComplex,
-            curve: shifted(autoCurve, by: 4),
-            isBuiltIn: true
-        )
-    }
+    static let chill4 = FanProfile(
+        name: "Chill 4°",
+        sfSymbol: "snowflake",
+        primarySensor: SMCKey.cpuComplex,
+        curve: shifted(autoCurve, by: 4),
+        isBuiltIn: true
+    )
 
     /// Chill 8° - macOS default curve, ramps 8°C earlier
-    static var chill8: FanProfile {
-        FanProfile(
-            name: "Chill 8°",
-            sfSymbol: "snowflake.circle.fill",
-            primarySensor: SMCKey.cpuComplex,
-            curve: shifted(autoCurve, by: 8),
-            isBuiltIn: true
-        )
-    }
+    static let chill8 = FanProfile(
+        name: "Chill 8°",
+        sfSymbol: "snowflake.circle.fill",
+        primarySensor: SMCKey.cpuComplex,
+        curve: shifted(autoCurve, by: 8),
+        isBuiltIn: true
+    )
 
     /// Performance - aggressive ramp, prevents throttle under sustained load
-    static var performance: FanProfile {
-        FanProfile(
-            name: "Performance",
-            sfSymbol: "bolt.fill",
-            primarySensor: SMCKey.cpuComplex,
-            curve: [
-                TempCurvePoint(temp: 30, rpmPercent: 0.40),
-                TempCurvePoint(temp: 45, rpmPercent: 0.60),
-                TempCurvePoint(temp: 60, rpmPercent: 0.80),
-                TempCurvePoint(temp: 75, rpmPercent: 0.95),
-                TempCurvePoint(temp: 85, rpmPercent: 1.00),
-            ],
-            isBuiltIn: true
-        )
-    }
+    static let performance = FanProfile(
+        name: "Performance",
+        sfSymbol: "bolt.fill",
+        primarySensor: SMCKey.cpuComplex,
+        curve: [
+            TempCurvePoint(temp: 30, rpmPercent: 0.40),
+            TempCurvePoint(temp: 45, rpmPercent: 0.60),
+            TempCurvePoint(temp: 60, rpmPercent: 0.80),
+            TempCurvePoint(temp: 75, rpmPercent: 0.95),
+            TempCurvePoint(temp: 85, rpmPercent: 1.00),
+        ],
+        isBuiltIn: true
+    )
 
     // MARK: - Persistence
 

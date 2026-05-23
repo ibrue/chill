@@ -114,11 +114,6 @@ All profiles support:
 - Automatic profile selection by power state
 - Manual custom profiles
 
-### App Rules
-- Associate any app with a profile
-- Automatic switching when app becomes frontmost
-- Useful for gaming, video editing, rendering
-
 ### SMC Control
 - Writes `Ftst=1` to unlock fan control
 - Maintains unlock every 150ms (firmware resets on sleep)
@@ -142,13 +137,6 @@ See **BUILD.md** for complete steps.
 3. Name, icon, primary sensor
 4. Set curve points (minimum 3)
 5. Click Create
-
-### Add App Rule
-1. Settings → App Rules
-2. Click + button
-3. Choose app from file picker
-4. Select profile to apply
-5. Click Add Rule
 
 ### View Helper Log
 ```bash
@@ -204,7 +192,6 @@ sudo launchctl list | grep com.chill
 - SensorManager: Polling loop
 - FanController: XPC client
 - ProfileEngine: Curve evaluation
-- AppMonitor: App rule triggering
 - PowerMonitor: AC/battery state
 
 **User Interface (9 Swift files)**

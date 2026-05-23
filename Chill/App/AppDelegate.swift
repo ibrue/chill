@@ -9,7 +9,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let sensorManager = SensorManager()
     let fanController = FanController()
     let profileEngine = ProfileEngine()
-    let appMonitor = AppMonitor()
     let powerMonitor = PowerMonitor()
 
     func applicationDidFinishLaunching(_ notification: Notification) {

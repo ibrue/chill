@@ -23,7 +23,6 @@ struct FanProfile: Codable, Identifiable, Hashable {
     var fallbackSensors: [String]
     var curve: [TempCurvePoint]
     var hysteresisDegrees: Float  // Time in seconds before RPM drops
-    var appTriggers: [String]    // Bundle IDs
     var isBuiltIn: Bool
 
     init(
@@ -34,7 +33,6 @@ struct FanProfile: Codable, Identifiable, Hashable {
         fallbackSensors: [String] = [],
         curve: [TempCurvePoint],
         hysteresisDegrees: Float = 3.0,
-        appTriggers: [String] = [],
         isBuiltIn: Bool = false
     ) {
         self.id = id
@@ -44,7 +42,6 @@ struct FanProfile: Codable, Identifiable, Hashable {
         self.fallbackSensors = fallbackSensors
         self.curve = curve
         self.hysteresisDegrees = hysteresisDegrees
-        self.appTriggers = appTriggers
         self.isBuiltIn = isBuiltIn
     }
 

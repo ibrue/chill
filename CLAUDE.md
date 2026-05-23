@@ -76,15 +76,15 @@ Chill/
 │   │   ├── SensorManager.swift ← 2s polling loop, publishes temp + RPM data
 │   │   ├── FanController.swift ← XPC client, sends commands to helper
 │   │   ├── ProfileEngine.swift ← Curve interpolation + hysteresis logic
-│   │   ├── AppMonitor.swift    ← NSWorkspace observer, auto profile switching
 │   │   └── PowerMonitor.swift  ← IOPowerSources, battery/AC/wattage
 │   ├── Models/
-│   │   ├── FanProfile.swift    ← Profile model + 5 built-in profiles
-│   │   ├── SensorReading.swift ← Snapshot of all sensor values
-│   │   └── AppRule.swift       ← BundleID → Profile mapping
+│   │   ├── FanProfile.swift    ← Profile model + 4 built-in profiles
+│   │   └── SensorReading.swift ← Snapshot of all sensor values
 │   └── UI/
+│       ├── Brand.swift                 ← Centralized colors / fonts / identity
 │       ├── PopoverView.swift           ← Main 270pt popover
 │       ├── Components/
+│       │   ├── BrandMark.swift         ← Snowflake-in-gradient logo mark
 │       │   ├── FanGauge.swift          ← Canvas arc gauge
 │       │   ├── TempPill.swift          ← Color-coded temp badge
 │       │   ├── ProfileSwitcher.swift   ← Glass pill row
@@ -92,8 +92,7 @@ Chill/
 │       │   └── GlassCard.swift         ← macOS 26 glass / NSVisualEffectView fallback
 │       └── Settings/
 │           ├── SettingsView.swift
-│           ├── ProfileEditorView.swift
-│           └── AppRulesView.swift
+│           └── ProfileEditorView.swift
 │
 ├── ChillHelper/                ← Helper daemon target only
 │   ├── main.swift              ← XPC listener entry point

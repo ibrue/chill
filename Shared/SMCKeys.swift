@@ -36,7 +36,7 @@ enum SMCKey {
 
     // MARK: - Temperature Sensors
 
-    /// Keyboard/palm rest temperature (primary sensor for Cool Keys profile)
+    /// Keyboard/palm rest temperature
     static let keyboardTemp = "Ts0S"
     /// CPU complex die temperature
     static let cpuComplex = "TCXC"

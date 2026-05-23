@@ -104,7 +104,7 @@ This document lists all 35 files created for the Chill project.
 18. **Chill/Models/FanProfile.swift** (192 lines)
     - TempCurvePoint: (temp, rpmPercent) points
     - FanProfile: complete profile definition
-    - 5 built-in profiles: auto, coolKeys, balanced, whisper, performance
+    - 4 built-in profiles: auto, chill4, chill8, performance (chill4/chill8 derived from autoCurve via shifted())
     - Persistence: load/save/delete via UserDefaults
     - Codable for JSON serialization
 

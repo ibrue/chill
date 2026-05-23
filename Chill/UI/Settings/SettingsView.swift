@@ -4,7 +4,7 @@ struct SettingsView: View {
     @State private var selectedTab: SettingsTab = .general
 
     enum SettingsTab: Hashable {
-        case general, profiles, appRules, about
+        case general, profiles, about
     }
 
     var body: some View {
@@ -16,9 +16,6 @@ struct SettingsView: View {
                 Label("Profiles", systemImage: "fan.fill")
                     .tag(SettingsTab.profiles)
 
-                Label("App Rules", systemImage: "app.connected.to.app.below.fill")
-                    .tag(SettingsTab.appRules)
-
                 Label("About", systemImage: "info.circle.fill")
                     .tag(SettingsTab.about)
             }
@@ -29,8 +26,6 @@ struct SettingsView: View {
                 GeneralSettingsView()
             case .profiles:
                 ProfilesSettingsView()
-            case .appRules:
-                AppRulesSettingsView()
             case .about:
                 AboutSettingsView()
             }
@@ -128,83 +123,6 @@ struct ProfilesSettingsView: View {
             FanProfile.delete(withID: profile.id)
         }
         customProfiles.remove(atOffsets: offsets)
-    }
-}
-
-// MARK: - App Rules Settings
-
-struct AppRulesSettingsView: View {
-    @State private var appRules: [AppRule] = []
-    @State private var showAddRule = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack {
-                Text("App Rules")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-
-                Spacer()
-
-                Button(action: { showAddRule = true }) {
-                    Label("Add Rule", systemImage: "plus.circle.fill")
-                }
-            }
-
-            List {
-                ForEach(appRules) { rule in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(rule.appName)
-                                .font(.body)
-                            Text(rule.bundleID)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        Spacer()
-
-                        if let profile = FanProfile.load(withID: rule.profileID) {
-                            Label(profile.name, systemImage: profile.sfSymbol)
-                                .font(.caption)
-                        }
-                    }
-                }
-                .onDelete(perform: deleteRule)
-            }
-
-            Spacer()
-        }
-        .padding()
-        .onAppear {
-            appRules = loadAppRules()
-        }
-        .sheet(isPresented: $showAddRule) {
-            NewAppRuleView { newRule in
-                appRules.append(newRule)
-                saveAppRules(appRules)
-            }
-        }
-    }
-
-    private func deleteRule(at offsets: IndexSet) {
-        appRules.remove(atOffsets: offsets)
-        saveAppRules(appRules)
-    }
-
-    private func loadAppRules() -> [AppRule] {
-        if let data = UserDefaults(suiteName: ChillConstants.suiteName)?.data(forKey: "appRules") {
-            if let rules = try? JSONDecoder().decode([AppRule].self, from: data) {
-                return rules
-            }
-        }
-        return []
-    }
-
-    private func saveAppRules(_ rules: [AppRule]) {
-        if let encoded = try? JSONEncoder().encode(rules) {
-            UserDefaults(suiteName: ChillConstants.suiteName)?.set(encoded, forKey: "appRules")
-        }
     }
 }
 

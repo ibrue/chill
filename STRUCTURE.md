@@ -153,8 +153,8 @@ SensorManager picks up new RPM → UI updates
    - No publishers needed for this simple state model
 
 5. **Sensor Strategy**
-   - Keyboard sensor (Ts0S) is primary for "Cool Keys" profile
-   - CPU complex (TCXC) fallback for most profiles
+   - CPU complex (TCXC) is the primary sensor for all built-in profiles
+   - Keyboard sensor (Ts0S) is read for the popover display only
    - Reads work without root on Apple Silicon
    - Actual fan control requires root via helper
 

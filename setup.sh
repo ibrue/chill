@@ -2,45 +2,52 @@
 set -e
 
 # Chill Helper Installation Script
-# Installs ChillHelper as a privileged LaunchDaemon
+# Builds ChillHelper and installs it as a privileged LaunchDaemon.
 
-echo "Installing Chill Helper..."
+HELPER_DEST="/Library/PrivilegedHelperTools/com.chill.helper"
+PLIST_DEST="/Library/LaunchDaemons/com.chill.helper.plist"
+DERIVED="./build"
 
-# Build ChillHelper if not already built
-if [ ! -f ".build/Release/ChillHelper" ]; then
-    echo "Building ChillHelper..."
-    xcodebuild -scheme ChillHelper -configuration Release build
-fi
+echo "Building ChillHelper..."
+xcodebuild \
+    -scheme ChillHelper \
+    -configuration Release \
+    -derivedDataPath "$DERIVED" \
+    build
 
-HELPER_PATH="/Library/PrivilegedHelperTools/com.chill.helper"
-PLIST_PATH="/Library/LaunchDaemons/com.chill.helper.plist"
-BUILT_HELPER=".build/Release/ChillHelper"
-
-# Check if built helper exists
-if [ ! -f "$BUILT_HELPER" ]; then
-    echo "Error: ChillHelper binary not found at $BUILT_HELPER"
-    echo "Please build the ChillHelper target first."
+# The helper binary may be named either "ChillHelper" or "com.chill.helper"
+# depending on whether EXECUTABLE_PATH is set in project.yml. Look for both.
+PRODUCTS="$DERIVED/Build/Products/Release"
+if [ -f "$PRODUCTS/ChillHelper" ]; then
+    BUILT_HELPER="$PRODUCTS/ChillHelper"
+elif [ -f "$PRODUCTS/com.chill.helper" ]; then
+    BUILT_HELPER="$PRODUCTS/com.chill.helper"
+else
+    echo "Error: ChillHelper binary not found under $PRODUCTS"
+    echo "Contents:"
+    ls -la "$PRODUCTS" 2>/dev/null || echo "(directory missing)"
     exit 1
 fi
 
-echo "Requesting sudo access to install helper..."
+echo "Found helper at: $BUILT_HELPER"
+echo "Requesting sudo to install helper..."
 
-# Copy helper binary
-sudo cp "$BUILT_HELPER" "$HELPER_PATH"
-sudo chmod 544 "$HELPER_PATH"
-sudo chown root:wheel "$HELPER_PATH"
+sudo cp "$BUILT_HELPER" "$HELPER_DEST"
+sudo chmod 544 "$HELPER_DEST"
+sudo chown root:wheel "$HELPER_DEST"
 
-# Copy launchd plist
-sudo cp Config/com.chill.helper.plist "$PLIST_PATH"
-sudo chmod 644 "$PLIST_PATH"
-sudo chown root:wheel "$PLIST_PATH"
+sudo cp Config/com.chill.helper.plist "$PLIST_DEST"
+sudo chmod 644 "$PLIST_DEST"
+sudo chown root:wheel "$PLIST_DEST"
 
-# Load the daemon
-echo "Loading LaunchDaemon..."
-sudo launchctl load "$PLIST_PATH"
+# Reload (unload-then-load) in case a previous version is already running
+sudo launchctl unload "$PLIST_DEST" 2>/dev/null || true
+sudo launchctl load "$PLIST_DEST"
 
-echo "Installation complete!"
-echo "ChillHelper is now running as root."
 echo ""
-echo "To verify: sudo launchctl list | grep com.chill"
-echo "To uninstall: sudo launchctl unload $PLIST_PATH && sudo rm $HELPER_PATH $PLIST_PATH"
+echo "Installation complete. Verify with:"
+echo "  sudo launchctl list | grep com.chill"
+echo ""
+echo "To uninstall later:"
+echo "  sudo launchctl unload $PLIST_DEST"
+echo "  sudo rm $HELPER_DEST $PLIST_DEST"

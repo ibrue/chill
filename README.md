@@ -19,6 +19,28 @@ A beautiful, minimal menu bar app for controlling Apple Silicon Mac fans via SMC
 - Xcode 15+
 - XcodeGen
 
+## Install From GitHub
+
+Chill currently installs from source. The installer builds the app locally, copies `Chill.app` to `/Applications`, installs the privileged helper, and launches the app:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ibrue/chill/main/install.sh)"
+```
+
+For this PR branch before it is merged:
+
+```bash
+CHILL_REF=ibrue/swift-build-fix /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ibrue/chill/ibrue/swift-build-fix/install.sh)"
+```
+
+You will be prompted for your password so the installer can place the helper in `/Library/PrivilegedHelperTools` and load its LaunchDaemon.
+
+To uninstall:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ibrue/chill/main/uninstall.sh)"
+```
+
 ## Setup
 
 1. Install XcodeGen:
@@ -44,7 +66,12 @@ A beautiful, minimal menu bar app for controlling Apple Silicon Mac fans via SMC
 
 4. Build both targets (Chill app and ChillHelper)
 
-5. Run the setup script to install the privileged helper:
+5. Install the app and privileged helper:
+   ```bash
+   ./install.sh
+   ```
+
+   Or install only the privileged helper:
    ```bash
    ./setup.sh
    ```

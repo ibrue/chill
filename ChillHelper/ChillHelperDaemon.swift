@@ -16,6 +16,9 @@ class ChillHelperDaemon: NSObject {
     private var currentFan1Mode: Bool = false
     private var currentFan1Target: Float = 4000
 
+    private var selectedTemperatureSources: [String: String] = [:]
+    private var temperatureMissCounts: [String: Int] = [:]
+
     private var maintainTimer: Timer?
     private var connectedClients: Int = 0
 
@@ -157,10 +160,7 @@ class ChillHelperDaemon: NSObject {
     func readSensors(reply: @escaping ([String: Float]) -> Void) {
         var readings: [String: Float] = [:]
         for sensor in SMCKey.temperatureSensors {
-            if let value = smc.readFloat(key: sensor.primary), isPlausibleTemperature(value, for: sensor.primary) {
-                readings[sensor.primary] = value
-            } else if let alt = sensor.fallback, let value = smc.readFloat(key: alt), isPlausibleTemperature(value, for: alt) {
-                // Report under the primary key so the app doesn't care which one worked.
+            if let value = readTemperature(sensor) {
                 readings[sensor.primary] = value
             }
         }
@@ -174,6 +174,86 @@ class ChillHelperDaemon: NSObject {
             readings[SMCKey.systemWatts] = watts
         }
         reply(readings)
+    }
+
+    private func readTemperature(_ sensor: (primary: String, fallback: String?)) -> Float? {
+        if sensor.primary == SMCKey.cpuComplex, sensor.fallback == SMCKey.cpuComplexAlt {
+            return readAveragedCPUTemperature(sensor)
+        }
+
+        if let selectedKey = selectedTemperatureSources[sensor.primary] {
+            if let value = smc.readFloat(key: selectedKey), isPlausibleTemperature(value, for: selectedKey) {
+                temperatureMissCounts[sensor.primary] = 0
+                return value
+            }
+
+            let misses = (temperatureMissCounts[sensor.primary] ?? 0) + 1
+            temperatureMissCounts[sensor.primary] = misses
+            if misses < 3 {
+                return nil
+            }
+        }
+
+        for key in temperatureCandidates(for: sensor) {
+            if let value = smc.readFloat(key: key), isPlausibleTemperature(value, for: key) {
+                if selectedTemperatureSources[sensor.primary] != key {
+                    print("[ChillHelper] \(SMCKey.displayName(for: sensor.primary)) sensor source: \(key)")
+                }
+                selectedTemperatureSources[sensor.primary] = key
+                temperatureMissCounts[sensor.primary] = 0
+                return value
+            }
+        }
+
+        return nil
+    }
+
+    private func readAveragedCPUTemperature(_ sensor: (primary: String, fallback: String?)) -> Float? {
+        guard let fallback = sensor.fallback else { return nil }
+
+        let primaryValue = plausibleTemperature(for: sensor.primary)
+        let fallbackValue = plausibleTemperature(for: fallback)
+
+        if let primaryValue, let fallbackValue {
+            if selectedTemperatureSources[sensor.primary] != "\(sensor.primary)+\(fallback)" {
+                print("[ChillHelper] CPU sensor source: averaged \(sensor.primary)+\(fallback)")
+            }
+            selectedTemperatureSources[sensor.primary] = "\(sensor.primary)+\(fallback)"
+            temperatureMissCounts[sensor.primary] = 0
+            return (primaryValue + fallbackValue) / 2.0
+        }
+
+        let singleValue = primaryValue ?? fallbackValue
+        guard let singleValue else {
+            temperatureMissCounts[sensor.primary] = (temperatureMissCounts[sensor.primary] ?? 0) + 1
+            return nil
+        }
+
+        let misses = (temperatureMissCounts[sensor.primary] ?? 0) + 1
+        temperatureMissCounts[sensor.primary] = misses
+        if misses < 3 {
+            return nil
+        }
+
+        if selectedTemperatureSources[sensor.primary] != "single" {
+            print("[ChillHelper] CPU sensor source: single source after repeated misses")
+        }
+        selectedTemperatureSources[sensor.primary] = "single"
+        return singleValue
+    }
+
+    private func plausibleTemperature(for key: String) -> Float? {
+        guard let value = smc.readFloat(key: key), isPlausibleTemperature(value, for: key) else {
+            return nil
+        }
+        return value
+    }
+
+    private func temperatureCandidates(for sensor: (primary: String, fallback: String?)) -> [String] {
+        if let fallback = sensor.fallback {
+            return [sensor.primary, fallback]
+        }
+        return [sensor.primary]
     }
 
     private func isPlausibleTemperature(_ value: Float, for key: String) -> Bool {

@@ -28,6 +28,7 @@ fi
 
 HELPER_PATH="/Library/PrivilegedHelperTools/com.chill.helper"
 PLIST_PATH="/Library/LaunchDaemons/com.chill.helper.plist"
+HELPER_LABEL="com.chill.helper"
 
 # Check if built helper exists
 if [ ! -f "$BUILT_HELPER" ]; then
@@ -37,6 +38,12 @@ if [ ! -f "$BUILT_HELPER" ]; then
 fi
 
 echo "Requesting sudo access to install helper..."
+
+if sudo launchctl print "system/$HELPER_LABEL" >/dev/null 2>&1; then
+    echo "Stopping existing LaunchDaemon..."
+    sudo launchctl bootout system "$PLIST_PATH" 2>/dev/null || \
+        sudo launchctl unload "$PLIST_PATH" 2>/dev/null || true
+fi
 
 # Copy helper binary
 sudo cp "$BUILT_HELPER" "$HELPER_PATH"
@@ -50,10 +57,13 @@ sudo chown root:wheel "$PLIST_PATH"
 
 # Load the daemon
 echo "Loading LaunchDaemon..."
-sudo launchctl load "$PLIST_PATH"
+sudo launchctl bootstrap system "$PLIST_PATH" 2>/dev/null || \
+    sudo launchctl load "$PLIST_PATH"
+sudo launchctl enable "system/$HELPER_LABEL" 2>/dev/null || true
+sudo launchctl kickstart -k "system/$HELPER_LABEL" 2>/dev/null || true
 
 echo "Installation complete!"
 echo "ChillHelper is now running as root."
 echo ""
-echo "To verify: sudo launchctl list | grep com.chill"
-echo "To uninstall: sudo launchctl unload $PLIST_PATH && sudo rm $HELPER_PATH $PLIST_PATH"
+echo "To verify: sudo launchctl print system/$HELPER_LABEL"
+echo "To uninstall: ./uninstall.sh"

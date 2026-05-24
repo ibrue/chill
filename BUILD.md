@@ -45,6 +45,12 @@ Then:
 
 ## Step 4: Install the Privileged Helper
 
+To install the full app into `/Applications` and install/reinstall the helper:
+
+```bash
+./install.sh
+```
+
 Run the setup script to install ChillHelper as a system daemon:
 
 ```bash

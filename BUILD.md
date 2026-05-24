@@ -45,6 +45,14 @@ Then:
 
 ## Step 4: Install the Privileged Helper
 
+To build a distributable macOS installer package:
+
+```bash
+Scripts/build_installer.sh
+```
+
+The package is written to `dist/Chill-v1.0.0.pkg`. It installs `Chill.app` into `/Applications`, installs the helper into `/Library/PrivilegedHelperTools`, installs the LaunchDaemon, loads the helper, and opens Chill for the active user.
+
 To install the full app into `/Applications` and install/reinstall the helper:
 
 ```bash

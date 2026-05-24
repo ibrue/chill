@@ -28,5 +28,7 @@
 	<string>Copyright 2025. All rights reserved.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSRequiresIPhoneOS</key>
+	<false/>
 </dict>
 </plist>

@@ -27,10 +27,10 @@ struct FanGauge: View {
                     .stroke(
                         LinearGradient(
                             gradient: Gradient(colors: [
-                                .cyan,
-                                .blue,
-                                progress > 0.5 ? .orange : .green,
-                                progress > 0.85 ? .red : .orange
+                                Brand.primary,
+                                Brand.secondary,
+                                progress > 0.5 ? Brand.warm : Brand.calm,
+                                progress > 0.85 ? Brand.hot : Brand.warm
                             ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -63,11 +63,11 @@ struct FanGauge: View {
                 if isManual {
                     Image(systemName: "hand.raised.fill")
                         .font(.system(size: 11))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Brand.warm)
                 } else {
                     Text("Auto")
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Brand.calm)
                 }
             }
             .padding(.horizontal, 4)

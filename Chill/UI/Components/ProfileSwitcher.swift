@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ProfileSwitcher: View {
     @Bindable var profileEngine: ProfileEngine
-    @State private var profiles = FanProfile.allBuiltIn
+    var profiles: [FanProfile] = FanProfile.allBuiltIn
 
     var body: some View {
         VStack(spacing: 8) {
@@ -44,7 +44,7 @@ struct ProfilePill: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(isSelected ? Color.blue : Color.gray.opacity(0.2))
+            .background(isSelected ? Brand.primary : Color.gray.opacity(0.2))
             .foregroundStyle(isSelected ? .white : .primary)
             .cornerRadius(16)
         }

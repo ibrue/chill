@@ -1,87 +1,89 @@
 import SwiftUI
 
+/// Power + battery readout intended to live inside a GlassCard.
+/// Wattage comes from `SensorManager.systemWatts` (SMC PSTR); shows "—" when
+/// the key isn't supported on this Mac. Battery state still comes from
+/// IOPowerSources via `PowerMonitor`.
 struct PowerBar: View {
     @Environment(PowerMonitor.self) var powerMonitor
+    @Environment(SensorManager.self) var sensorManager
 
     var body: some View {
-        HStack(spacing: 12) {
-            // Power draw
+        HStack(spacing: 10) {
+            wattChip
+            Spacer(minLength: 4)
+            batteryChip
+        }
+    }
+
+    private var wattChip: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "bolt.fill")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Brand.warm)
+            Text(wattText)
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .contentTransition(.numericText(value: Double(sensorManager.systemWatts)))
+            Text("W")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var wattText: String {
+        let w = sensorManager.systemWatts
+        return w > 0 ? String(format: "%.0f", w) : "—"
+    }
+
+    @ViewBuilder
+    private var batteryChip: some View {
+        if powerMonitor.isOnAC {
             HStack(spacing: 4) {
-                Image(systemName: "bolt.fill")
+                Image(systemName: "powerplug.fill")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.yellow)
-
-                Text(String(format: "%.0f W", powerMonitor.estimatedWatts))
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(Brand.calm)
+                Text("AC")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                if powerMonitor.isCharging {
+                    Text("· charging")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color.yellow.opacity(0.15))
-            .cornerRadius(6)
-
-            Spacer()
-
-            // Battery status
-            if !powerMonitor.isOnAC {
-                HStack(spacing: 4) {
-                    Image(systemName: batteryIcon)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(batteryColor)
-
-                    Text("\(powerMonitor.batteryPercent)%")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-
-                    if powerMonitor.isCharging {
-                        Text("Charging")
-                            .font(.system(size: 10, weight: .regular))
-                            .foregroundStyle(.green)
-                    }
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(batteryColor.opacity(0.15))
-                .cornerRadius(6)
-            } else {
-                HStack(spacing: 4) {
-                    Image(systemName: "bolt.circle.fill")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.green)
-
-                    Text("AC Power")
-                        .font(.system(size: 11, weight: .semibold))
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.green.opacity(0.15))
-                .cornerRadius(6)
+        } else {
+            HStack(spacing: 4) {
+                Image(systemName: batteryIcon)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(batteryColor)
+                Text("\(powerMonitor.batteryPercent)%")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(8)
     }
 
     private var batteryIcon: String {
-        let percent = powerMonitor.batteryPercent
-        if percent > 75 { return "battery.100" }
-        if percent > 50 { return "battery.75" }
-        if percent > 25 { return "battery.50" }
+        let p = powerMonitor.batteryPercent
+        if p > 75 { return "battery.100" }
+        if p > 50 { return "battery.75" }
+        if p > 25 { return "battery.50" }
         return "battery.25"
     }
 
     private var batteryColor: Color {
-        let percent = powerMonitor.batteryPercent
-        if percent > 30 { return .green }
-        if percent > 15 { return .orange }
-        return .red
+        let p = powerMonitor.batteryPercent
+        if p > 30 { return Brand.calm }
+        if p > 15 { return Brand.warm }
+        return Brand.hot
     }
 }
 
 #Preview {
-    VStack(spacing: 20) {
-        PowerBar()
-            .environment(PowerMonitor())
-    }
-    .padding()
+    PowerBar()
+        .environment(PowerMonitor())
+        .environment(SensorManager())
+        .padding()
+        .frame(width: 280)
+        .background(.black)
 }

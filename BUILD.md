@@ -16,7 +16,7 @@ brew install xcodegen
 ## Step 2: Generate Xcode Project
 
 ```bash
-cd Chill
+cd /path/to/zurich
 xcodegen generate
 ```
 
@@ -28,8 +28,8 @@ This creates `Chill.xcodeproj` from `project.yml`.
 
 ```bash
 # Build both targets
-xcodebuild -scheme Chill -configuration Release build
-xcodebuild -scheme ChillHelper -configuration Release build
+xcodebuild -project Chill.xcodeproj -scheme Chill -configuration Release -destination 'platform=macOS' build
+xcodebuild -project Chill.xcodeproj -scheme ChillHelper -configuration Release -destination 'platform=macOS' build
 ```
 
 ### Option B: Xcode GUI
@@ -44,6 +44,12 @@ Then:
 3. Switch to ChillHelper scheme and build it too
 
 ## Step 4: Install the Privileged Helper
+
+To install the full app into `/Applications` and install/reinstall the helper:
+
+```bash
+./install.sh
+```
 
 Run the setup script to install ChillHelper as a system daemon:
 
@@ -64,10 +70,10 @@ You'll be prompted for your password. This script:
 2. Product > Run (or Cmd+R)
 
 ### From Finder
-Navigate to the build output and double-click `Chill.app`, or:
+Navigate to Xcode's build output and double-click `Chill.app`, or:
 
 ```bash
-open build/Release/Chill.app
+open ~/Library/Developer/Xcode/DerivedData/Chill-*/Build/Products/Release/Chill.app
 ```
 
 The app will appear in your menu bar (thermometer icon).
@@ -100,10 +106,9 @@ export PATH="/usr/local/bin:$PATH"
 ```
 
 ### Project.yml not found
-Make sure you're in the Chill directory:
+Make sure you're in the repository root:
 ```bash
-cd Chill
-pwd  # Should show path ending in /Chill
+pwd  # Should show the directory containing project.yml
 xcodegen generate
 ```
 

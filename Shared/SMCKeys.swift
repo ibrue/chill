@@ -8,46 +8,49 @@ enum SMCKey {
     static let ftst = "Ftst"
 
     // Fan 0 (primary/larger)
-    /// Fan 0 mode: 0=auto, 1=manual
     static let fanMode0 = "F0Md"
-    /// Fan 0 target RPM (float32, LE)
     static let fanTarget0 = "F0Tg"
-    /// Fan 0 actual RPM
     static let fanActual0 = "F0Ac"
-    /// Fan 0 minimum RPM
     static let fanMin0 = "F0Mn"
-    /// Fan 0 maximum RPM
     static let fanMax0 = "F0Mx"
 
     // Fan 1 (secondary/smaller)
-    /// Fan 1 mode: 0=auto, 1=manual
     static let fanMode1 = "F1Md"
-    /// Fan 1 target RPM (float32, LE)
     static let fanTarget1 = "F1Tg"
-    /// Fan 1 actual RPM
     static let fanActual1 = "F1Ac"
-    /// Fan 1 minimum RPM
     static let fanMin1 = "F1Mn"
-    /// Fan 1 maximum RPM
     static let fanMax1 = "F1Mx"
 
     /// Number of fans
     static let fanCount = "FNum"
 
     // MARK: - Temperature Sensors
+    //
+    // Keys vary by Mac generation. The primaries below target current
+    // Apple Silicon (M-series); the *Alt fallbacks cover older M1/Intel keys.
+    // The helper tries primary first, then *Alt, and reports the result under
+    // the primary key name.
 
-    /// Keyboard/palm rest temperature (primary sensor for Cool Keys profile)
-    static let keyboardTemp = "Ts0S"
-    /// CPU complex die temperature
-    static let cpuComplex = "TCXC"
+    /// Keyboard / palm rest temperature
+    static let keyboardTemp    = "Ts0P"
+    static let keyboardTempAlt = "Ts0S"
+
+    /// CPU temperature (perf core on Apple Silicon, complex on Intel)
+    static let cpuComplex      = "Tp09"
+    static let cpuComplexAlt   = "TCXC"
+
     /// CPU proximity sensor
-    static let cpuProximity = "TC0D"
+    static let cpuProximity    = "TC0D"
+
     /// GPU die temperature
-    static let gpuDie = "TG0D"
+    static let gpuDie          = "Tg05"
+    static let gpuDieAlt       = "TG0D"
+
     /// Battery temperature
-    static let batteryTemp = "TB1T"
+    static let batteryTemp     = "TB1T"
+
     /// Ambient temperature
-    static let ambientTemp = "TA0P"
+    static let ambientTemp     = "TA0P"
 
     // MARK: - Power
 
@@ -56,20 +59,33 @@ enum SMCKey {
 
     // MARK: - Helpers
 
-    /// Returns all key strings for temperature sensors
-    static var temperatureSensors: [String] {
-        [keyboardTemp, cpuComplex, cpuProximity, gpuDie, batteryTemp, ambientTemp]
+    /// Sensors the helper should read on each poll, paired with optional fallback.
+    /// The reported value comes back under the primary key.
+    static var temperatureSensors: [(primary: String, fallback: String?)] {
+        [
+            (keyboardTemp, keyboardTempAlt),
+            (cpuComplex,   cpuComplexAlt),
+            (cpuProximity, nil),
+            (gpuDie,       gpuDieAlt),
+            (batteryTemp,  nil),
+            (ambientTemp,  nil),
+        ]
     }
 
-    /// Returns display name for a sensor key
+    /// Just the primary key names — for UI pickers and profile editors that
+    /// don't need to know about fallbacks.
+    static var primaryTemperatureKeys: [String] {
+        temperatureSensors.map { $0.primary }
+    }
+
     static func displayName(for key: String) -> String {
         switch key {
-        case keyboardTemp: return "Keyboard"
-        case cpuComplex: return "CPU Complex"
-        case cpuProximity: return "CPU Proximity"
-        case gpuDie: return "GPU"
-        case batteryTemp: return "Battery"
-        case ambientTemp: return "Ambient"
+        case keyboardTemp, keyboardTempAlt: return "Keyboard"
+        case cpuComplex, cpuComplexAlt:     return "CPU"
+        case cpuProximity:                  return "CPU Proximity"
+        case gpuDie, gpuDieAlt:             return "GPU"
+        case batteryTemp:                   return "Battery"
+        case ambientTemp:                   return "Ambient"
         default: return "Unknown"
         }
     }

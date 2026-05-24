@@ -187,7 +187,7 @@ smc.writeUInt8(key: "Ftst", value: 0)  // Release unlock
 
 | Key  | Type   | Description |
 |------|--------|-------------|
-| Ts0S | Float  | Keyboard/palm rest (primary for Cool Keys) |
+| Ts0S | Float  | Keyboard/palm rest |
 | TC0D | Float  | CPU proximity |
 | TCXC | Float  | CPU complex die |
 | TG0D | Float  | GPU die |

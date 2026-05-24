@@ -10,7 +10,6 @@ final class PowerMonitor {
     var isOnAC: Bool = false
     var batteryPercent: Int = 100
     var isCharging: Bool = false
-    var estimatedWatts: Float = 0
     var suggestedProfileOverride: String?
 
     // MARK: - Lifecycle
@@ -89,7 +88,7 @@ final class PowerMonitor {
                 if onAC && !charging {
                     self.suggestedProfileOverride = "Performance"
                 } else if !onAC && percent < 30 {
-                    self.suggestedProfileOverride = "Whisper"
+                    self.suggestedProfileOverride = "Auto"
                 } else {
                     self.suggestedProfileOverride = nil
                 }

@@ -6,15 +6,29 @@ set -e
 
 echo "Installing Chill Helper..."
 
+# Generate the Xcode project if needed
+if [ ! -d "Chill.xcodeproj" ]; then
+    echo "Generating Xcode project..."
+    xcodegen generate
+fi
+
+BUILT_HELPER=".build/Build/Products/Release/com.chill.helper"
+
 # Build ChillHelper if not already built
-if [ ! -f ".build/Release/ChillHelper" ]; then
+if [ ! -f "$BUILT_HELPER" ]; then
     echo "Building ChillHelper..."
-    xcodebuild -scheme ChillHelper -configuration Release build
+    xcodebuild \
+        -project Chill.xcodeproj \
+        -scheme ChillHelper \
+        -configuration Release \
+        -destination 'platform=macOS' \
+        -derivedDataPath .build \
+        build
 fi
 
 HELPER_PATH="/Library/PrivilegedHelperTools/com.chill.helper"
 PLIST_PATH="/Library/LaunchDaemons/com.chill.helper.plist"
-BUILT_HELPER=".build/Release/ChillHelper"
+HELPER_LABEL="com.chill.helper"
 
 # Check if built helper exists
 if [ ! -f "$BUILT_HELPER" ]; then
@@ -24,6 +38,12 @@ if [ ! -f "$BUILT_HELPER" ]; then
 fi
 
 echo "Requesting sudo access to install helper..."
+
+if sudo launchctl print "system/$HELPER_LABEL" >/dev/null 2>&1; then
+    echo "Stopping existing LaunchDaemon..."
+    sudo launchctl bootout system "$PLIST_PATH" 2>/dev/null || \
+        sudo launchctl unload "$PLIST_PATH" 2>/dev/null || true
+fi
 
 # Copy helper binary
 sudo cp "$BUILT_HELPER" "$HELPER_PATH"
@@ -37,10 +57,13 @@ sudo chown root:wheel "$PLIST_PATH"
 
 # Load the daemon
 echo "Loading LaunchDaemon..."
-sudo launchctl load "$PLIST_PATH"
+sudo launchctl bootstrap system "$PLIST_PATH" 2>/dev/null || \
+    sudo launchctl load "$PLIST_PATH"
+sudo launchctl enable "system/$HELPER_LABEL" 2>/dev/null || true
+sudo launchctl kickstart -k "system/$HELPER_LABEL" 2>/dev/null || true
 
 echo "Installation complete!"
 echo "ChillHelper is now running as root."
 echo ""
-echo "To verify: sudo launchctl list | grep com.chill"
-echo "To uninstall: sudo launchctl unload $PLIST_PATH && sudo rm $HELPER_PATH $PLIST_PATH"
+echo "To verify: sudo launchctl print system/$HELPER_LABEL"
+echo "To uninstall: ./uninstall.sh"

@@ -6,7 +6,7 @@ You are working on **Chill**, a macOS menu bar app that controls fan speeds on A
 
 ## What This App Does
 
-Chill sits in the menu bar and intelligently controls Mac fans via the SMC (System Management Controller). Apple's default thermal daemon (`thermalmonitord`) is deliberately conservative — it lets the keyboard heat up and lets the CPU throttle before ramping fans. Chill fixes this with custom fan profiles, especially **Cool Keys** which watches the palm rest sensor and ramps fans 10°C earlier than Apple does.
+Chill sits in the menu bar and intelligently controls Mac fans via the SMC (System Management Controller). Apple's default thermal daemon (`thermalmonitord`) is deliberately conservative — it lets the CPU heat up before ramping fans. Chill fixes this with custom fan profiles that watch the CPU complex sensor and shift Apple's default curve earlier by clear 4°C and 8°C offsets.
 
 ---
 
@@ -49,7 +49,7 @@ Apple Silicon's `thermalmonitord` will **silently override** any fan speed you w
 | `F0Tg`   | Fan 0 target RPM (float32 LE)               |
 | `F0Ac`   | Fan 0 actual RPM (read-only)                |
 | `F1*`    | Fan 1 keys (MacBook Pro 14"/16" dual-fan)   |
-| `Ts0S`   | **Palm rest / keyboard sensor** ← primary for Cool Keys profile |
+| `Ts0S`   | Palm rest / keyboard sensor                    |
 | `TCXC`   | CPU complex die temp                        |
 | `TG0D`   | GPU die temp                                |
 | `TB1T`   | Battery temp                                |
@@ -79,12 +79,14 @@ Chill/
 │   │   ├── AppMonitor.swift    ← NSWorkspace observer, auto profile switching
 │   │   └── PowerMonitor.swift  ← IOPowerSources, battery/AC/wattage
 │   ├── Models/
-│   │   ├── FanProfile.swift    ← Profile model + 5 built-in profiles
+│   │   ├── FanProfile.swift    ← Profile model + 4 built-in profiles
 │   │   ├── SensorReading.swift ← Snapshot of all sensor values
 │   │   └── AppRule.swift       ← BundleID → Profile mapping
 │   └── UI/
+│       ├── Brand.swift                 ← Central brand colors/type/tokens
 │       ├── PopoverView.swift           ← Main 270pt popover
 │       ├── Components/
+│       │   ├── BrandMark.swift         ← Chill logo mark
 │       │   ├── FanGauge.swift          ← Canvas arc gauge
 │       │   ├── TempPill.swift          ← Color-coded temp badge
 │       │   ├── ProfileSwitcher.swift   ← Glass pill row
@@ -108,23 +110,16 @@ Chill/
 
 ---
 
-## Five Built-in Fan Profiles (in FanProfile.swift)
+## Four Built-in Fan Profiles (in FanProfile.swift)
 
 | Profile     | Primary Sensor | Philosophy |
 |-------------|---------------|------------|
 | Auto        | TCXC          | Pass-through — let Apple manage |
-| Cool Keys ⭐ | Ts0S (keyboard) | Ramp at 35°C — 10° earlier than Apple |
-| Balanced    | TCXC          | 8°C lower triggers than Apple default |
-| Whisper     | TCXC          | Minimum fan, prioritize silence |
+| Chill 4°    | TCXC          | Apple-default curve shifted 4°C earlier |
+| Chill 8°    | TCXC          | Apple-default curve shifted 8°C earlier |
 | Performance | TCXC          | Aggressive ramp, prevent throttle |
 
-**Cool Keys curve (the main differentiator):**
-- 35°C → 30% fan
-- 40°C → 55% fan
-- 45°C → 80% fan
-- 50°C → 100% fan
-
-Apple's default doesn't start ramping until ~45°C on this sensor.
+The Chill offset profiles are derived from the Auto curve in `FanProfile.swift` with `shifted(_:by:)`, so their semantics stay tied to the Apple-default reference curve.
 
 ---
 

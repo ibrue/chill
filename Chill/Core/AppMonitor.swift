@@ -5,11 +5,15 @@ import AppKit
 /// Monitors active app and triggers profiles based on rules
 @Observable
 final class AppMonitor {
+    private let settingsStore: ChillSettingsStore
+    private let profileEngine: ProfileEngine
     private var appRules: [AppRule] = []
     var currentTriggeredProfile: FanProfile?
 
-    init() {
-        loadAppRules()
+    init(settingsStore: ChillSettingsStore, profileEngine: ProfileEngine) {
+        self.settingsStore = settingsStore
+        self.profileEngine = profileEngine
+        reloadRules()
         setupNotifications()
     }
 
@@ -37,20 +41,24 @@ final class AppMonitor {
 
     // MARK: - Rule Management
 
-    private func loadAppRules() {
-        // Load from UserDefaults or on-disk storage
-        if let data = UserDefaults(suiteName: ChillConstants.suiteName)?.data(forKey: "appRules") {
-            if let decoded = try? JSONDecoder().decode([AppRule].self, from: data) {
-                appRules = decoded
-            }
+    func reloadRules() {
+        appRules = settingsStore.appRules
+    }
+
+    func reloadRulesAndEvaluate() {
+        reloadRules()
+        if let bundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier {
+            checkAndApplyRules(for: bundleID)
+        } else {
+            clearRuleOverride()
         }
     }
 
     func saveAppRules(_ rules: [AppRule]) {
-        appRules = rules
-        if let encoded = try? JSONEncoder().encode(rules) {
-            UserDefaults(suiteName: ChillConstants.suiteName)?.set(encoded, forKey: "appRules")
+        for rule in rules {
+            _ = settingsStore.saveRule(rule)
         }
+        reloadRulesAndEvaluate()
     }
 
     // MARK: - App Monitoring
@@ -65,21 +73,29 @@ final class AppMonitor {
     }
 
     @objc private func appDidDeactivate(_ notification: Notification) {
-        currentTriggeredProfile = nil
+        if NSWorkspace.shared.frontmostApplication == nil {
+            clearRuleOverride()
+        }
     }
 
     private func checkAndApplyRules(for bundleID: String) {
         // Find matching rule
         for rule in appRules {
-            if rule.bundleID == bundleID {
+            if rule.enabled && rule.bundleID == bundleID {
                 // Load the profile by ID
-                if let profile = FanProfile.load(withID: rule.profileID) {
+                if let profile = settingsStore.profile(withID: rule.profileID) ?? FanProfile.load(withID: rule.profileID) {
                     currentTriggeredProfile = profile
+                    profileEngine.applyRuleOverride(profile)
                     return
                 }
             }
         }
 
+        clearRuleOverride()
+    }
+
+    private func clearRuleOverride() {
         currentTriggeredProfile = nil
+        profileEngine.applyRuleOverride(nil)
     }
 }

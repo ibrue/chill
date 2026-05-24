@@ -7,6 +7,10 @@ DERIVED_DATA_PATH="${DERIVED_DATA_PATH:-.build}"
 OUTPUT_DIR="${OUTPUT_DIR:-dist}"
 PACKAGE_ID="${PACKAGE_ID:-com.chill.installer}"
 HELPER_LABEL="com.chill.helper"
+APP_SIGN_IDENTITY="${APP_SIGN_IDENTITY:-}"
+INSTALLER_SIGN_IDENTITY="${INSTALLER_SIGN_IDENTITY:-}"
+DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-}"
+NOTARY_PROFILE="${NOTARY_PROFILE:-}"
 
 APP_BUILD_PATH="$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION/Chill.app"
 HELPER_BUILD_PATH="$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION/com.chill.helper"
@@ -23,6 +27,14 @@ require_command xcodegen
 require_command xcodebuild
 require_command pkgbuild
 
+if [ -n "$NOTARY_PROFILE" ]; then
+    require_command xcrun
+    if [ -z "$APP_SIGN_IDENTITY" ] || [ -z "$INSTALLER_SIGN_IDENTITY" ]; then
+        echo "Error: NOTARY_PROFILE requires APP_SIGN_IDENTITY and INSTALLER_SIGN_IDENTITY." >&2
+        exit 1
+    fi
+fi
+
 export COPYFILE_DISABLE=1
 
 mkdir -p "$OUTPUT_DIR"
@@ -30,14 +42,37 @@ mkdir -p "$OUTPUT_DIR"
 echo "Generating Xcode project..."
 xcodegen generate
 
+BUILD_SETTINGS=()
+if [ -n "$APP_SIGN_IDENTITY" ]; then
+    BUILD_SETTINGS+=(
+        CODE_SIGN_STYLE=Manual
+        CODE_SIGN_IDENTITY="$APP_SIGN_IDENTITY"
+        OTHER_CODE_SIGN_FLAGS=--timestamp
+    )
+    if [ -n "$DEVELOPMENT_TEAM" ]; then
+        BUILD_SETTINGS+=(DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM")
+    fi
+fi
+
 echo "Building Chill ($CONFIGURATION)..."
-xcodebuild \
-    -project Chill.xcodeproj \
-    -scheme Chill \
-    -configuration "$CONFIGURATION" \
-    -destination 'platform=macOS' \
-    -derivedDataPath "$DERIVED_DATA_PATH" \
-    build
+if [ ${#BUILD_SETTINGS[@]} -gt 0 ]; then
+    xcodebuild \
+        -project Chill.xcodeproj \
+        -scheme Chill \
+        -configuration "$CONFIGURATION" \
+        -destination 'platform=macOS' \
+        -derivedDataPath "$DERIVED_DATA_PATH" \
+        "${BUILD_SETTINGS[@]}" \
+        build
+else
+    xcodebuild \
+        -project Chill.xcodeproj \
+        -scheme Chill \
+        -configuration "$CONFIGURATION" \
+        -destination 'platform=macOS' \
+        -derivedDataPath "$DERIVED_DATA_PATH" \
+        build
+fi
 
 if [ ! -d "$APP_BUILD_PATH" ]; then
     echo "Error: built app not found at $APP_BUILD_PATH" >&2
@@ -47,6 +82,12 @@ fi
 if [ ! -f "$HELPER_BUILD_PATH" ]; then
     echo "Error: built helper not found at $HELPER_BUILD_PATH" >&2
     exit 1
+fi
+
+if [ -n "$APP_SIGN_IDENTITY" ]; then
+    echo "Verifying Developer ID signatures..."
+    codesign --verify --deep --strict "$APP_BUILD_PATH"
+    codesign --verify --strict "$HELPER_BUILD_PATH"
 fi
 
 WORKDIR="$(mktemp -d)"
@@ -124,13 +165,32 @@ EOF
 
 chmod +x "$SCRIPTS/preinstall" "$SCRIPTS/postinstall"
 
+PKGBUILD_ARGS=(
+    --root "$PAYLOAD"
+    --scripts "$SCRIPTS"
+    --identifier "$PACKAGE_ID"
+    --version "$VERSION"
+    --install-location /
+)
+if [ -n "$INSTALLER_SIGN_IDENTITY" ]; then
+    PKGBUILD_ARGS+=(
+        --sign "$INSTALLER_SIGN_IDENTITY"
+        --timestamp
+    )
+fi
+
 echo "Building installer package..."
-pkgbuild \
-    --root "$PAYLOAD" \
-    --scripts "$SCRIPTS" \
-    --identifier "$PACKAGE_ID" \
-    --version "$VERSION" \
-    --install-location / \
-    "$PKG_PATH"
+pkgbuild "${PKGBUILD_ARGS[@]}" "$PKG_PATH"
+
+if [ -n "$NOTARY_PROFILE" ]; then
+    echo "Submitting package for notarization..."
+    xcrun notarytool submit "$PKG_PATH" \
+        --keychain-profile "$NOTARY_PROFILE" \
+        --wait
+
+    echo "Stapling notarization ticket..."
+    xcrun stapler staple "$PKG_PATH"
+    xcrun stapler validate "$PKG_PATH"
+fi
 
 echo "Created $PKG_PATH"

@@ -53,6 +53,23 @@ Scripts/build_installer.sh
 
 The package is written to `dist/Chill-v1.0.0.pkg`. It installs `Chill.app` into `/Applications`, installs the helper into `/Library/PrivilegedHelperTools`, installs the LaunchDaemon, loads the helper, and opens Chill for the active user.
 
+For a public release that opens without Gatekeeper's malware warning, build with Developer ID signing and notarization:
+
+```bash
+xcrun notarytool store-credentials chill-notary \
+  --apple-id "apple-id@example.com" \
+  --team-id "TEAMID1234" \
+  --password "app-specific-password"
+
+APP_SIGN_IDENTITY="Developer ID Application: Example Name (TEAMID1234)" \
+INSTALLER_SIGN_IDENTITY="Developer ID Installer: Example Name (TEAMID1234)" \
+DEVELOPMENT_TEAM="TEAMID1234" \
+NOTARY_PROFILE="chill-notary" \
+Scripts/build_installer.sh
+```
+
+The notarized build signs the app/helper, signs the package, submits it to Apple, staples the ticket, and validates the stapled package. It requires an Apple Developer Program account and installed Developer ID Application and Developer ID Installer certificates.
+
 To install the full app into `/Applications` and install/reinstall the helper:
 
 ```bash

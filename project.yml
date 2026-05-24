@@ -27,6 +27,7 @@ targets:
           - "Core/SMC/**"   # SMC files live in Shared/ — included below
       - path: Shared
     resources:
+      - path: Chill/Assets.xcassets
       - path: Config/Chill.entitlements
         buildPhase: sources
     dependencies:
@@ -44,7 +45,11 @@ targets:
     info:
       path: Chill/Info.plist
       properties:
+        CFBundleDevelopmentRegion: en
+        LSApplicationCategoryType: public.app-category.utilities
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         LSUIElement: true
+        NSHumanReadableCopyright: Copyright 2025. All rights reserved.
         NSPrincipalClass: NSApplication
         NSRequiresIPhoneOS: false
 
@@ -59,8 +64,12 @@ targets:
       SWIFT_VERSION: "5.9"
       CODE_SIGN_ENTITLEMENTS: Config/ChillHelper.entitlements
       PRODUCT_BUNDLE_IDENTIFIER: com.chill.helper
-      EXECUTABLE_PATH: com.chill.helper
+      PRODUCT_NAME: com.chill.helper
     info:
       path: ChillHelper/Info.plist
       properties:
+        CFBundleDevelopmentRegion: en
+        CFBundlePackageType: TOOL
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        NSHumanReadableCopyright: Copyright 2025. All rights reserved.
         NSRequiresIPhoneOS: false

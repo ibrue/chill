@@ -1,11 +1,14 @@
 import Foundation
 import Observation
 
-/// Manages real-time SMC sensor readings
-/// No root required for reads on Apple Silicon
+/// Manages real-time SMC sensor readings.
+///
+/// All reads go through the helper via XPC. On Apple Silicon the AppleSMC
+/// IOConnectCallStructMethod path returns kIOReturnBadArgument from a user
+/// process, so a root-side reader is required.
 @Observable
 final class SensorManager {
-    private let smc = globalSMCBridge
+    private weak var fanController: FanController?
     private var timer: Timer?
 
     // MARK: - Published Values
@@ -16,33 +19,26 @@ final class SensorManager {
     var cpuTemp: Float = 0
     var gpuTemp: Float = 0
     var batteryTemp: Float = 0
+    var systemWatts: Float = 0
     var fanCount: Int = 2
     var isThrottling: Bool = false
-
-    // For forwarding to helper
-    var allReadings: [String: Float] {
-        [
-            SMCKey.fanActual0: fan0RPM,
-            SMCKey.fanActual1: fan1RPM,
-            SMCKey.keyboardTemp: keyboardTemp,
-            SMCKey.cpuComplex: cpuTemp,
-            SMCKey.gpuDie: gpuTemp,
-            SMCKey.batteryTemp: batteryTemp,
-        ]
-    }
+    var lastUpdate: Date?
 
     // MARK: - Lifecycle
 
-    init() {
-        // Read fan count once at startup
-        fanCount = smc.readFanCount() ?? 2
-
-        // Start polling
-        startPolling()
-    }
+    init() {}
 
     deinit {
         stopPolling()
+    }
+
+    /// Inject the FanController used for XPC-mediated SMC reads.
+    /// Must be called once at startup before polling produces values.
+    func attach(fanController: FanController) {
+        self.fanController = fanController
+        if timer == nil {
+            startPolling()
+        }
     }
 
     // MARK: - Polling
@@ -51,7 +47,6 @@ final class SensorManager {
         timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             self?.updateReadings()
         }
-        // Initial read
         updateReadings()
     }
 
@@ -61,31 +56,41 @@ final class SensorManager {
     }
 
     private func updateReadings() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        guard let fanController else { return }
+        fanController.readSensors { [weak self] readings in
             guard let self else { return }
-
-            let readings = [
-                (SMCKey.fanActual0, \SensorManager.fan0RPM),
-                (SMCKey.fanActual1, \SensorManager.fan1RPM),
-                (SMCKey.keyboardTemp, \SensorManager.keyboardTemp),
-                (SMCKey.cpuComplex, \SensorManager.cpuTemp),
-                (SMCKey.gpuDie, \SensorManager.gpuTemp),
-                (SMCKey.batteryTemp, \SensorManager.batteryTemp),
-            ]
-
-            for (key, keyPath) in readings {
-                if let value = self.smc.readFloat(key: key) {
-                    DispatchQueue.main.async {
-                        self[keyPath: keyPath] = value
-                    }
-                }
+            if let v = readings[SMCKey.fanActual0] { self.fan0RPM = v }
+            if let v = readings[SMCKey.fanActual1] { self.fan1RPM = v }
+            self.keyboardTemp = self.acceptedTemperature(readings[SMCKey.keyboardTemp], current: self.keyboardTemp)
+            self.cpuTemp = self.acceptedTemperature(readings[SMCKey.cpuComplex], current: self.cpuTemp)
+            self.gpuTemp = self.acceptedTemperature(readings[SMCKey.gpuDie], current: self.gpuTemp)
+            self.batteryTemp = self.acceptedTemperature(readings[SMCKey.batteryTemp], current: self.batteryTemp)
+            if let watts = readings[SMCKey.systemWatts], watts.isFinite, watts >= 0 {
+                self.systemWatts = watts
             }
-
-            // Estimate throttling (CPU temp > 95°C typically triggers throttling)
-            let shouldThrottle = self.cpuTemp > 95
-            DispatchQueue.main.async {
-                self.isThrottling = shouldThrottle
-            }
+            self.isThrottling = self.cpuTemp > 95
+            if !readings.isEmpty { self.lastUpdate = Date() }
         }
+    }
+
+    private func acceptedTemperature(_ candidate: Float?, current: Float) -> Float {
+        guard let candidate, candidate.isFinite, (10...125).contains(candidate) else {
+            return current
+        }
+        return candidate
+    }
+
+    /// Build a SensorReading snapshot.
+    func currentReading(lastComputedRPM: Float? = nil) -> SensorReading {
+        SensorReading(
+            timestamp: lastUpdate ?? Date(),
+            fan0RPM: fan0RPM,
+            fan1RPM: fan1RPM,
+            keyboardTemp: keyboardTemp,
+            cpuTemp: cpuTemp,
+            gpuTemp: gpuTemp,
+            batteryTemp: batteryTemp,
+            lastComputedRPM: lastComputedRPM
+        )
     }
 }

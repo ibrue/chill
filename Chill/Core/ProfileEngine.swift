@@ -4,8 +4,13 @@ import Observation
 /// Manages fan profiles and target RPM computation
 @Observable
 final class ProfileEngine {
-    var activeProfile: FanProfile = .auto
+    var selectedProfile: FanProfile = .auto
+    var ruleOverrideProfile: FanProfile?
     private var lastRPMDecreaseTime: Date = Date()
+
+    var activeProfile: FanProfile {
+        ruleOverrideProfile ?? selectedProfile
+    }
 
     // MARK: - Profile Evaluation
 
@@ -82,7 +87,12 @@ final class ProfileEngine {
 
     /// Switch active profile
     func switchProfile(_ profile: FanProfile) {
-        activeProfile = profile
+        selectedProfile = profile
+        lastRPMDecreaseTime = Date()
+    }
+
+    func applyRuleOverride(_ profile: FanProfile?) {
+        ruleOverrideProfile = profile
         lastRPMDecreaseTime = Date()
     }
 }

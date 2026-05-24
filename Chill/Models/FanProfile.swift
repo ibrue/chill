@@ -50,72 +50,64 @@ struct FanProfile: Codable, Identifiable, Hashable {
 
     // MARK: - Built-in Profiles
 
+    private enum BuiltInID {
+        static let auto = UUID(uuidString: "10000000-0000-0000-0000-000000000001")!
+        static let chill4 = UUID(uuidString: "10000000-0000-0000-0000-000000000004")!
+        static let chill8 = UUID(uuidString: "10000000-0000-0000-0000-000000000008")!
+        static let performance = UUID(uuidString: "10000000-0000-0000-0000-0000000000FF")!
+    }
+
+    private static let autoCurve = [
+        TempCurvePoint(temp: 30, rpmPercent: 0.2),
+        TempCurvePoint(temp: 50, rpmPercent: 0.3),
+        TempCurvePoint(temp: 70, rpmPercent: 0.6),
+        TempCurvePoint(temp: 90, rpmPercent: 1.0),
+    ]
+
+    private static let performanceCurve = [
+        TempCurvePoint(temp: 30, rpmPercent: 0.40),
+        TempCurvePoint(temp: 45, rpmPercent: 0.60),
+        TempCurvePoint(temp: 60, rpmPercent: 0.80),
+        TempCurvePoint(temp: 75, rpmPercent: 0.95),
+        TempCurvePoint(temp: 85, rpmPercent: 1.00),
+    ]
+
+    private static func shifted(_ base: [TempCurvePoint], by offsetC: Float) -> [TempCurvePoint] {
+        base.map { TempCurvePoint(temp: $0.tempCelsius - offsetC, rpmPercent: $0.rpmPercent) }
+    }
+
     /// Auto mode - let thermalmonitord handle it
     static var auto: FanProfile {
         FanProfile(
+            id: BuiltInID.auto,
             name: "Auto",
             sfSymbol: "leaf.fill",
             primarySensor: SMCKey.cpuComplex,
-            curve: [
-                TempCurvePoint(temp: 30, rpmPercent: 0.2),
-                TempCurvePoint(temp: 50, rpmPercent: 0.3),
-                TempCurvePoint(temp: 70, rpmPercent: 0.6),
-                TempCurvePoint(temp: 90, rpmPercent: 1.0),
-            ],
+            curve: autoCurve,
             isBuiltIn: true
         )
     }
 
-    /// Cool Keys - aggressive keyboard sensor monitoring
-    /// Ramps up early to keep palm rest cool during typing
-    static var coolKeys: FanProfile {
+    /// Chill 4° - Apple-default curve shifted 4°C earlier
+    static var chill4: FanProfile {
         FanProfile(
-            name: "Cool Keys",
-            sfSymbol: "keyboard.fill",
-            primarySensor: SMCKey.keyboardTemp,
-            fallbackSensors: [SMCKey.cpuComplex],
-            curve: [
-                TempCurvePoint(temp: 35, rpmPercent: 0.30),
-                TempCurvePoint(temp: 40, rpmPercent: 0.55),
-                TempCurvePoint(temp: 45, rpmPercent: 0.80),
-                TempCurvePoint(temp: 50, rpmPercent: 1.00),
-            ],
-            hysteresisDegrees: 2.0,
-            isBuiltIn: true
-        )
-    }
-
-    /// Balanced - sensible default for everyday use
-    static var balanced: FanProfile {
-        FanProfile(
-            name: "Balanced",
-            sfSymbol: "gauge",
+            id: BuiltInID.chill4,
+            name: "Chill 4°",
+            sfSymbol: "snowflake",
             primarySensor: SMCKey.cpuComplex,
-            curve: [
-                TempCurvePoint(temp: 30, rpmPercent: 0.25),
-                TempCurvePoint(temp: 45, rpmPercent: 0.40),
-                TempCurvePoint(temp: 60, rpmPercent: 0.55),
-                TempCurvePoint(temp: 75, rpmPercent: 0.75),
-                TempCurvePoint(temp: 90, rpmPercent: 1.00),
-            ],
+            curve: shifted(autoCurve, by: 4),
             isBuiltIn: true
         )
     }
 
-    /// Whisper - ultra-quiet, minimal fan activity
-    static var whisper: FanProfile {
+    /// Chill 8° - Apple-default curve shifted 8°C earlier
+    static var chill8: FanProfile {
         FanProfile(
-            name: "Whisper",
-            sfSymbol: "moon.fill",
+            id: BuiltInID.chill8,
+            name: "Chill 8°",
+            sfSymbol: "snowflake.fill",
             primarySensor: SMCKey.cpuComplex,
-            curve: [
-                TempCurvePoint(temp: 30, rpmPercent: 0.15),
-                TempCurvePoint(temp: 50, rpmPercent: 0.20),
-                TempCurvePoint(temp: 70, rpmPercent: 0.40),
-                TempCurvePoint(temp: 85, rpmPercent: 0.80),
-                TempCurvePoint(temp: 95, rpmPercent: 1.00),
-            ],
-            hysteresisDegrees: 5.0,
+            curve: shifted(autoCurve, by: 8),
             isBuiltIn: true
         )
     }
@@ -123,16 +115,11 @@ struct FanProfile: Codable, Identifiable, Hashable {
     /// Performance - maximum cooling for sustained loads
     static var performance: FanProfile {
         FanProfile(
+            id: BuiltInID.performance,
             name: "Performance",
             sfSymbol: "bolt.fill",
             primarySensor: SMCKey.cpuComplex,
-            curve: [
-                TempCurvePoint(temp: 30, rpmPercent: 0.40),
-                TempCurvePoint(temp: 45, rpmPercent: 0.60),
-                TempCurvePoint(temp: 60, rpmPercent: 0.80),
-                TempCurvePoint(temp: 75, rpmPercent: 0.95),
-                TempCurvePoint(temp: 85, rpmPercent: 1.00),
-            ],
+            curve: performanceCurve,
             isBuiltIn: true
         )
     }
@@ -141,7 +128,7 @@ struct FanProfile: Codable, Identifiable, Hashable {
 
     /// Load all built-in profiles
     static var allBuiltIn: [FanProfile] {
-        [.auto, .coolKeys, .balanced, .whisper, .performance]
+        [.auto, .chill4, .chill8, .performance]
     }
 
     /// Load a profile by ID
@@ -152,6 +139,10 @@ struct FanProfile: Codable, Identifiable, Hashable {
         }
 
         // Check custom profiles in UserDefaults
+        if let profile = allCustom().first(where: { $0.id == id }) {
+            return profile
+        }
+
         if let data = UserDefaults(suiteName: ChillConstants.suiteName)?.data(forKey: "profile_\(id)") {
             if let profile = try? JSONDecoder().decode(FanProfile.self, from: data) {
                 return profile
@@ -164,15 +155,32 @@ struct FanProfile: Codable, Identifiable, Hashable {
     /// Save a custom profile
     func save() {
         if !isBuiltIn {
-            if let encoded = try? JSONEncoder().encode(self) {
-                UserDefaults(suiteName: ChillConstants.suiteName)?.set(encoded, forKey: "profile_\(id)")
+            let defaults = UserDefaults(suiteName: ChillConstants.suiteName)
+            var profiles = Self.allCustom()
+            if let index = profiles.firstIndex(where: { $0.id == id }) {
+                profiles[index] = self
+            } else {
+                profiles.append(self)
+            }
+
+            if let encodedProfiles = try? JSONEncoder().encode(profiles) {
+                defaults?.set(encodedProfiles, forKey: "customProfiles")
+            }
+
+            if let encodedProfile = try? JSONEncoder().encode(self) {
+                defaults?.set(encodedProfile, forKey: "profile_\(id)")
             }
         }
     }
 
     /// Delete a profile
     static func delete(withID id: UUID) {
-        UserDefaults(suiteName: ChillConstants.suiteName)?.removeObject(forKey: "profile_\(id)")
+        let defaults = UserDefaults(suiteName: ChillConstants.suiteName)
+        defaults?.removeObject(forKey: "profile_\(id)")
+        let profiles = allCustom().filter { $0.id != id }
+        if let encoded = try? JSONEncoder().encode(profiles) {
+            defaults?.set(encoded, forKey: "customProfiles")
+        }
     }
 
     /// Get all custom profiles

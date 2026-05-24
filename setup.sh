@@ -6,15 +6,28 @@ set -e
 
 echo "Installing Chill Helper..."
 
+# Generate the Xcode project if needed
+if [ ! -d "Chill.xcodeproj" ]; then
+    echo "Generating Xcode project..."
+    xcodegen generate
+fi
+
+BUILT_HELPER=".build/Build/Products/Release/com.chill.helper"
+
 # Build ChillHelper if not already built
-if [ ! -f ".build/Release/ChillHelper" ]; then
+if [ ! -f "$BUILT_HELPER" ]; then
     echo "Building ChillHelper..."
-    xcodebuild -scheme ChillHelper -configuration Release build
+    xcodebuild \
+        -project Chill.xcodeproj \
+        -scheme ChillHelper \
+        -configuration Release \
+        -destination 'platform=macOS' \
+        -derivedDataPath .build \
+        build
 fi
 
 HELPER_PATH="/Library/PrivilegedHelperTools/com.chill.helper"
 PLIST_PATH="/Library/LaunchDaemons/com.chill.helper.plist"
-BUILT_HELPER=".build/Release/ChillHelper"
 
 # Check if built helper exists
 if [ ! -f "$BUILT_HELPER" ]; then

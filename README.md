@@ -35,7 +35,7 @@ Chill checks for updates via [Sparkle](https://sparkle-project.org/) against the
 https://github.com/ibrue/chill/releases/latest/download/appcast.xml
 ```
 
-Click the download arrow in the popover header to check manually. Updates are delivered as signed, notarized `.pkg` files — installing one will prompt for your admin password (because the privileged helper has to be re-installed).
+Click the download arrow in the popover header to check manually. Updates are delivered as signed, notarized `.pkg` files - installing one will prompt for your admin password (because the privileged helper has to be re-installed).
 
 ### Releasing a new version (maintainers)
 
@@ -45,7 +45,7 @@ One-time setup:
    ```bash
    ./Sparkle/bin/generate_keys
    ```
-   Store the private key file securely (1Password, encrypted disk). The public key is printed — paste it into `project.yml` under `SUPublicEDKey` and regenerate the project.
+   Store the private key file securely (1Password, encrypted disk). The public key is printed - paste it into `project.yml` under `SUPublicEDKey` and regenerate the project.
 2. Store notarization credentials in the keychain:
    ```bash
    xcrun notarytool store-credentials chill-notary \

@@ -7,7 +7,7 @@
 # command they touch (launchctl, chown, chmod, pkill, pgrep, id, open) replaced
 # by shims on PATH. The shims log every call and return whatever exit code the
 # current scenario dictates, letting us reproduce the launchd failure modes that
-# make a real install abort — without loading daemons or chowning real files.
+# make a real install abort - without loading daemons or chowning real files.
 #
 # It checks two things:
 #   1. The shipping scripts exit 0 across every realistic install scenario

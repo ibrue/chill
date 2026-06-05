@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Chill installer — postinstall
+# Chill installer - postinstall
 #
 # By the time this runs, the installer engine has already laid down every file
 # in the payload. This script only *activates* the privileged helper. A hiccup
@@ -9,8 +9,8 @@
 # always exits 0. If the daemon can't be loaded right now, its RunAtLoad key
 # starts it at the next boot/login anyway.
 #
-# Notes on launchctl: `bootstrap` regularly returns a non-zero status — most
-# infamously `5: Input/output error` — even when the job is actually registered.
+# Notes on launchctl: `bootstrap` regularly returns a non-zero status - most
+# infamously `5: Input/output error` - even when the job is actually registered.
 # The previous version let that failure flow into an unguarded fallback under
 # `set -e`, which aborted postinstall and surfaced "The installation failed."
 # We never use `set -e` here; every external call is guarded and the real

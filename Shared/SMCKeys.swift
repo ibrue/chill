@@ -39,6 +39,16 @@ enum SMCKey {
     static let cpuComplex      = "Tp09"
     static let cpuComplexAlt   = "TCXC"
 
+    /// Apple Silicon exposes one temp sensor per CPU core. A single core swings
+    /// wildly (~40C idle to ~60C active) as it sleeps and wakes, which makes a
+    /// one-sensor reading jump around. We sample the whole cluster and report the
+    /// hottest core - that's the thermally meaningful number and stays stable.
+    static let cpuCoreSensors = [
+        "Tp01", "Tp05", "Tp09", "Tp0D", "Tp0H", "Tp0L", "Tp0P", "Tp0T",
+        "Tp0X", "Tp0b", "Tp0f", "Tp0j", "Tp0n", "Tp0r", "Tp0v", "Tp0z",
+        "Tp1h", "Tp1t", "Tp1p", "Tp1l", "TCXC",
+    ]
+
     /// CPU proximity sensor
     static let cpuProximity    = "TC0D"
 
@@ -72,7 +82,7 @@ enum SMCKey {
         ]
     }
 
-    /// Just the primary key names — for UI pickers and profile editors that
+    /// Just the primary key names - for UI pickers and profile editors that
     /// don't need to know about fallbacks.
     static var primaryTemperatureKeys: [String] {
         temperatureSensors.map { $0.primary }

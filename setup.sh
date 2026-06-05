@@ -55,10 +55,11 @@ sudo cp Config/com.chill.helper.plist "$PLIST_PATH"
 sudo chmod 644 "$PLIST_PATH"
 sudo chown root:wheel "$PLIST_PATH"
 
-# Load the daemon
+# Load the daemon. bootstrap can return non-zero (e.g. "5: Input/output error")
+# even when it works, so never let the fallback abort the script under `set -e`.
 echo "Loading LaunchDaemon..."
 sudo launchctl bootstrap system "$PLIST_PATH" 2>/dev/null || \
-    sudo launchctl load "$PLIST_PATH"
+    sudo launchctl load "$PLIST_PATH" 2>/dev/null || true
 sudo launchctl enable "system/$HELPER_LABEL" 2>/dev/null || true
 sudo launchctl kickstart -k "system/$HELPER_LABEL" 2>/dev/null || true
 

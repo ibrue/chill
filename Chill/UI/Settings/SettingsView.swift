@@ -219,15 +219,15 @@ private struct OverviewSettingsPage: View {
     }
 
     private func temp(_ value: Float) -> String {
-        value > 0 ? "\(Int(value.rounded()))°C" : "—"
+        value > 0 ? "\(Int(value.rounded()))°C" : "-"
     }
 
     private func rpm(_ value: Float) -> String {
-        value > 0 ? "\(Int(value.rounded())) RPM" : "—"
+        value > 0 ? "\(Int(value.rounded())) RPM" : "-"
     }
 
     private func watts(_ value: Float) -> String {
-        value > 0 ? String(format: "%.1f W", value) : "—"
+        value > 0 ? String(format: "%.1f W", value) : "-"
     }
 }
 

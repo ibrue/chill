@@ -16,6 +16,11 @@ schemes:
       targets:
         ChillHelper: all
 
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.6.0
+
 targets:
   Chill:
     type: application
@@ -33,6 +38,8 @@ targets:
     dependencies:
       - target: ChillHelper
         embed: false
+      - package: Sparkle
+        product: Sparkle
     settings:
       MACOSX_DEPLOYMENT_TARGET: "14.0"
       SWIFT_VERSION: "5.9"
@@ -52,6 +59,9 @@ targets:
         NSHumanReadableCopyright: Copyright 2025. All rights reserved.
         NSPrincipalClass: NSApplication
         NSRequiresIPhoneOS: false
+        SUFeedURL: https://github.com/ibrue/chill/releases/latest/download/appcast.xml
+        SUPublicEDKey: "qZasLBfbPgbFpbGuktB0Hj5Hm+I2BgHPq4V1ouDbqRs="
+        SUEnableInstallerLauncherService: true
 
   ChillHelper:
     type: tool

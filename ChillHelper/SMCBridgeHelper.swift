@@ -6,7 +6,7 @@ import IOKit
 ///
 /// Logging policy: every state transition is logged, but the 150ms maintain
 /// loop is silent (it only logs when a write fails). This keeps the helper log
-/// at a sane size — the previous version produced ~13M lines of repeated
+/// at a sane size - the previous version produced ~13M lines of repeated
 /// "SMC unlocked" output.
 class SMCBridgeHelper {
     private let smc = SMCBridge()
@@ -15,7 +15,7 @@ class SMCBridgeHelper {
 
     // MARK: - Unlock Management
 
-    /// Initial unlock, logged on transition. SMC writes are flaky cold —
+    /// Initial unlock, logged on transition. SMC writes are flaky cold -
     /// retry a handful of times with a small backoff before giving up.
     @discardableResult
     func unlock() -> Bool {
@@ -63,13 +63,26 @@ class SMCBridgeHelper {
         }
     }
 
-    /// Release SMC control and let system take over.
+    /// Release SMC control and let the system take over. Clearing Ftst is the
+    /// step that hands cooling back to macOS, so retry it (SMC writes are flaky)
+    /// rather than risk leaving the fans suppressed on a single failed write.
     @discardableResult
     func releaseControl() -> Bool {
-        let success = smc.writeUInt8(key: SMCKey.ftst, value: 0)
+        var success = false
+        for attempt in 0..<8 {
+            if smc.writeUInt8(key: SMCKey.ftst, value: 0) {
+                success = true
+                break
+            }
+            if attempt < 7 {
+                usleep(20_000) // 20 ms
+            }
+        }
         if success {
             print("[SMCHelper] SMC control released (Ftst=0)")
             unlockedLogged = false
+        } else {
+            print("[SMCHelper] WARNING: failed to release SMC control (Ftst=0) after retries")
         }
         return success
     }

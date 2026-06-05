@@ -96,8 +96,10 @@ sudo install -m 544 -o root -g wheel "$HELPER_BUILD_PATH" "$HELPER_INSTALL_PATH"
 sudo install -m 644 -o root -g wheel Config/com.chill.helper.plist "$HELPER_PLIST_PATH"
 
 echo "Starting helper..."
+# bootstrap can return non-zero (e.g. "5: Input/output error") even when it
+# works, so never let the fallback abort the script under `set -e`.
 sudo launchctl bootstrap system "$HELPER_PLIST_PATH" 2>/dev/null || \
-    sudo launchctl load "$HELPER_PLIST_PATH"
+    sudo launchctl load "$HELPER_PLIST_PATH" 2>/dev/null || true
 sudo launchctl enable "system/$HELPER_LABEL" 2>/dev/null || true
 sudo launchctl kickstart -k "system/$HELPER_LABEL" 2>/dev/null || true
 

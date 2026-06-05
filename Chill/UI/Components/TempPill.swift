@@ -21,7 +21,7 @@ struct TempPill: View {
                         Image(systemName: icon)
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(tint)
-                        Text(temp > 0 ? String(format: "%.0f°", temp) : "—")
+                        Text(temp > 0 ? String(format: "%.0f°", temp) : "-")
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
                             .monospacedDigit()
                             .foregroundStyle(.primary)

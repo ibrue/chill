@@ -70,6 +70,16 @@ Scripts/build_installer.sh
 
 The notarized build signs the app/helper, signs the package, submits it to Apple, staples the ticket, and validates the stapled package. It requires an Apple Developer Program account and installed Developer ID Application and Developer ID Installer certificates.
 
+### Testing the installer scripts (sandbox)
+
+The package's `preinstall`/`postinstall` scripts live in `Scripts/installer-scripts/` so they can be tested without touching your system. Run:
+
+```bash
+Scripts/test_installer.sh
+```
+
+This executes the real scripts with every system command (`launchctl`, `chown`, `pkill`, …) replaced by shims, across the install scenarios that matter — clean install, reinstall over a running helper, `launchctl bootstrap` returning `5: Input/output error`, and the daemon failing to load. The scripts are deliberately best-effort: a launchd hiccup must never abort the install (which is what surfaced "The installation failed."), so they always exit 0 and the helper's `RunAtLoad` key starts it at next boot if it can't load immediately.
+
 To install the full app into `/Applications` and install/reinstall the helper:
 
 ```bash

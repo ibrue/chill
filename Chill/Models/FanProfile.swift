@@ -105,7 +105,7 @@ struct FanProfile: Codable, Identifiable, Hashable {
         FanProfile(
             id: BuiltInID.chill8,
             name: "Chill 8°",
-            sfSymbol: "snowflake.fill",
+            sfSymbol: "snowflake.circle.fill",
             primarySensor: SMCKey.cpuComplex,
             curve: shifted(autoCurve, by: 8),
             isBuiltIn: true

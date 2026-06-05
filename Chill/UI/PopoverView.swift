@@ -6,6 +6,7 @@ struct PopoverView: View {
     @Environment(FanController.self) var fanController
     @Environment(ProfileEngine.self) var profileEngine
     @Environment(PowerMonitor.self) var powerMonitor
+    @Environment(UpdateController.self) var updateController
 
     var onOpenSettings: () -> Void = {}
 
@@ -50,6 +51,12 @@ struct PopoverView: View {
         HStack(spacing: 8) {
             BrandMark()
             Spacer()
+            if updateController.isUpdaterEnabled {
+                iconButton("arrow.down.circle", help: "Check for Updates") {
+                    updateController.checkForUpdates()
+                }
+                .disabled(!updateController.canCheckForUpdates)
+            }
             iconButton("gear", help: "Settings", action: onOpenSettings)
             iconButton("xmark", help: "Quit") { NSApplication.shared.terminate(nil) }
         }
@@ -95,7 +102,7 @@ struct PopoverView: View {
                 .frame(width: 6, height: 6)
             Text(sensorManager.cpuTemp > 0
                  ? String(format: "%.0f°C", sensorManager.cpuTemp)
-                 : "—")
+                 : "-")
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .monospacedDigit()
         }
@@ -144,5 +151,6 @@ struct PopoverView: View {
         .environment(FanController())
         .environment(ProfileEngine())
         .environment(PowerMonitor())
+        .environment(UpdateController())
         .frame(width: 320, height: 480)
 }

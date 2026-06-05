@@ -17,7 +17,7 @@ struct FanReadout: View {
                 Text("Fan \(fanIndex)")
                     .font(.system(size: 10, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
-                Text(rpm > 0 ? "\(rpm)" : "—")
+                Text(rpm > 0 ? "\(rpm)" : "-")
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .contentTransition(.numericText(value: Double(rpm)))

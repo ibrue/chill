@@ -24,6 +24,11 @@ final class SensorManager {
     var isThrottling: Bool = false
     var lastUpdate: Date?
 
+    /// True once we've confirmed this Mac reports no controllable fans (e.g. a
+    /// fanless MacBook Air). Gated on `lastUpdate` so the UI never flashes the
+    /// fanless state before the first reading arrives.
+    var isFanless: Bool { lastUpdate != nil && fanCount == 0 }
+
     // MARK: - Lifecycle
 
     init() {}
@@ -68,8 +73,23 @@ final class SensorManager {
             if let watts = readings[SMCKey.systemWatts], watts.isFinite, watts >= 0 {
                 self.systemWatts = watts
             }
+            self.updateFanCount(from: readings)
             self.isThrottling = self.cpuTemp > 95
             if !readings.isEmpty { self.lastUpdate = Date() }
+        }
+    }
+
+    /// Resolve how many fans this Mac actually has. Prefer the SMC `FNum` value
+    /// the helper reports; if it's unavailable, infer from which fan RPM keys
+    /// responded. This keeps Chill correct across the whole Apple Silicon line -
+    /// fanless (0), single-fan (1), and dual-fan (2) machines alike.
+    private func updateFanCount(from readings: [String: Float]) {
+        guard !readings.isEmpty else { return }
+        if let reported = readings[SMCKey.fanCount], reported.isFinite, (0...8).contains(reported) {
+            fanCount = Int(reported)
+        } else {
+            fanCount = (readings[SMCKey.fanActual0] != nil ? 1 : 0)
+                     + (readings[SMCKey.fanActual1] != nil ? 1 : 0)
         }
     }
 
@@ -77,7 +97,15 @@ final class SensorManager {
         guard let candidate, candidate.isFinite, (10...125).contains(candidate) else {
             return current
         }
-        return candidate
+        // First valid reading: adopt it directly. Otherwise exponentially smooth.
+        // Apple Silicon core temps swing fast (tens of degrees in a second or two)
+        // as cores burst and idle; feeding that raw into the fan curve makes the
+        // fan hunt up and down. Smoothing tracks the real trend and steadies both
+        // the readout and the fan. Rises are weighted a little heavier than falls
+        // so Chill still ramps up promptly when things actually get hot.
+        guard current > 0 else { return candidate }
+        let alpha: Float = candidate > current ? 0.4 : 0.2
+        return current + alpha * (candidate - current)
     }
 
     /// Build a SensorReading snapshot.

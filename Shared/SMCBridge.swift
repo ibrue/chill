@@ -9,9 +9,9 @@ import IOKit
 struct SMCParamStruct {
     var key: UInt32 = 0                          // 4 bytes
     var vers: (UInt8, UInt8, UInt8, UInt8,        // vers: major, minor, build, reserved,
-               UInt16) = (0, 0, 0, 0, 0)         //        release — 6 bytes total
+               UInt16) = (0, 0, 0, 0, 0)         //        release - 6 bytes total
     var pLimitData: (UInt16, UInt16,              // pLimitData: version, length,
-                     UInt32, UInt32, UInt32)       //   cpuPLimit, gpuPLimit, memPLimit — 16 bytes
+                     UInt32, UInt32, UInt32)       //   cpuPLimit, gpuPLimit, memPLimit - 16 bytes
                    = (0, 0, 0, 0, 0)
     var keyInfo: SMCKeyInfoData = SMCKeyInfoData() // 10 bytes (padded to 12 by Swift)
     var padding: UInt16 = 0                       // align to match C layout
@@ -193,7 +193,14 @@ class SMCBridge {
             writeParam.data8 = SMCCommand.writeKey.rawValue
             writeParam.setBytesArray(bytes)
 
-            return callSMC(&writeParam) == KERN_SUCCESS
+            let kr = callSMC(&writeParam)
+            if kr != KERN_SUCCESS {
+                // Surface the real status so "writes succeed" can be trusted.
+                // 0xe00002c2 = NotPrivileged, 0x84 = key not found, 0x82 = bad
+                // command (SMC still in system mode), 0xe00002c2/0x2bc = bad arg.
+                print("[SMC] writeKey('\(key)') failed: 0x\(String(UInt32(bitPattern: kr), radix: 16))")
+            }
+            return kr == KERN_SUCCESS
         }
     }
 

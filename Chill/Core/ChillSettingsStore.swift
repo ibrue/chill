@@ -25,6 +25,7 @@ final class ChillSettingsStore {
         static let customProfiles = "customProfiles"
         static let appRules = "appRules"
         static let menuBarDisplayMode = "menuBarDisplayMode"
+        static let hasCompletedOnboarding = "hasCompletedOnboarding"
     }
 
     private let defaults = UserDefaults(suiteName: ChillConstants.suiteName) ?? .standard
@@ -34,6 +35,14 @@ final class ChillSettingsStore {
     var menuBarDisplayMode: MenuBarDisplayMode = .iconOnly {
         didSet {
             defaults.set(menuBarDisplayMode.rawValue, forKey: Key.menuBarDisplayMode)
+        }
+    }
+
+    /// Whether the first-run walkthrough has been shown. Persisted so it only
+    /// appears once; set back to false to replay it on next launch.
+    var hasCompletedOnboarding: Bool = false {
+        didSet {
+            defaults.set(hasCompletedOnboarding, forKey: Key.hasCompletedOnboarding)
         }
     }
 
@@ -48,6 +57,7 @@ final class ChillSettingsStore {
     func reload() {
         customProfiles = Self.loadCustomProfiles(from: defaults)
         appRules = Self.loadAppRules(from: defaults)
+        hasCompletedOnboarding = defaults.bool(forKey: Key.hasCompletedOnboarding)
         if let rawValue = defaults.string(forKey: Key.menuBarDisplayMode),
            let mode = MenuBarDisplayMode(rawValue: rawValue) {
             menuBarDisplayMode = mode

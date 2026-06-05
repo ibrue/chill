@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Power + battery readout intended to live inside a GlassCard.
-/// Wattage comes from `SensorManager.systemWatts` (SMC PSTR); shows "—" when
+/// Wattage comes from `SensorManager.systemWatts` (SMC PSTR); shows "-" when
 /// the key isn't supported on this Mac. Battery state still comes from
 /// IOPowerSources via `PowerMonitor`.
 struct PowerBar: View {
@@ -33,7 +33,7 @@ struct PowerBar: View {
 
     private var wattText: String {
         let w = sensorManager.systemWatts
-        return w > 0 ? String(format: "%.0f", w) : "—"
+        return w > 0 ? String(format: "%.0f", w) : "-"
     }
 
     @ViewBuilder

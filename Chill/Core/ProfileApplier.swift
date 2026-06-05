@@ -69,9 +69,14 @@ final class ProfileApplier {
             return
         }
 
+        fanController.activeProfileName = profile.name
+
+        // Fanless Macs (e.g. MacBook Air) report 0 fans: there is nothing to
+        // drive, so Chill just monitors temperatures. Don't issue fan writes.
+        guard sensorManager.fanCount > 0 else { return }
+
         let target = profileEngine.evaluate(sensors: reading, fanMax: fanMaxRPM)
         lastTargetRPM = target
-        fanController.activeProfileName = profile.name
 
         fanController.setFanMode(manual: true, fanIndex: 0, targetRPM: target) { _ in }
         if sensorManager.fanCount > 1 {

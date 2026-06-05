@@ -5,16 +5,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSWindowD
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var settingsWindow: NSWindow?
+    private var onboardingWindow: NSWindow?
     private var localEventMonitor: Any?
     private var globalEventMonitor: Any?
     private var statusUpdateTimer: Timer?
 
-    // Core objects owned by AppDelegate — injected into SwiftUI environment
+    // Core objects owned by AppDelegate - injected into SwiftUI environment
     let settingsStore = ChillSettingsStore()
     let sensorManager = SensorManager()
     let fanController = FanController()
     let profileEngine = ProfileEngine()
     let powerMonitor = PowerMonitor()
+    let updateController = UpdateController()
     private(set) lazy var appMonitor = AppMonitor(
         settingsStore: settingsStore,
         profileEngine: profileEngine
@@ -35,6 +37,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSWindowD
         sensorManager.attach(fanController: fanController)
         profileApplier.start()
         startStatusUpdates()
+
+        if !settingsStore.hasCompletedOnboarding {
+            showOnboardingWindow()
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -69,6 +75,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSWindowD
             .environment(fanController)
             .environment(profileEngine)
             .environment(powerMonitor)
+            .environment(updateController)
 
         popover = NSPopover()
         popover?.behavior = .transient
@@ -122,6 +129,53 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSWindowD
         window.makeKeyAndOrderFront(nil)
     }
 
+    // MARK: - Onboarding
+
+    private func showOnboardingWindow() {
+        if let onboardingWindow {
+            NSApplication.shared.activate()
+            onboardingWindow.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        let onboardingView = OnboardingView(onFinish: { [weak self] in
+            self?.completeOnboarding()
+        })
+            .environment(sensorManager)
+            .environment(settingsStore)
+            .environment(profileEngine)
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 540, height: 460),
+            styleMask: [.titled, .closable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.isMovableByWindowBackground = true
+        window.isReleasedWhenClosed = false
+        window.contentViewController = NSHostingController(rootView: onboardingView)
+        window.center()
+        window.delegate = self
+        onboardingWindow = window
+
+        // An .accessory (menu-bar-only) app can't bring a real window to the
+        // front; switch to .regular for the walkthrough and revert on close.
+        NSApplication.shared.setActivationPolicy(.regular)
+        NSApplication.shared.activate()
+        window.makeKeyAndOrderFront(nil)
+    }
+
+    private func completeOnboarding() {
+        settingsStore.hasCompletedOnboarding = true
+        onboardingWindow?.close() // windowWillClose reverts the activation policy
+        // Point the user at the menu bar by popping the popover open.
+        DispatchQueue.main.async { [weak self] in
+            self?.togglePopover(nil)
+        }
+    }
+
     private func closePopover(_ sender: Any?) {
         popover?.performClose(sender)
         stopEventMonitoring()
@@ -167,8 +221,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSWindowD
     }
 
     func windowWillClose(_ notification: Notification) {
-        if notification.object as? NSWindow === settingsWindow {
+        let closing = notification.object as? NSWindow
+        if closing === settingsWindow {
             settingsWindow = nil
+        }
+        if closing === onboardingWindow {
+            // Closing the walkthrough (via Get Started or the close button)
+            // counts as done; revert to menu-bar-only mode.
+            settingsStore.hasCompletedOnboarding = true
+            onboardingWindow = nil
+            NSApplication.shared.setActivationPolicy(.accessory)
         }
     }
 
@@ -189,12 +251,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSWindowD
         case .iconOnly:
             button.title = ""
         case .temperature:
-            button.title = sensorManager.cpuTemp > 0 ? "\(Int(sensorManager.cpuTemp.rounded()))°" : "—°"
+            button.title = sensorManager.cpuTemp > 0 ? "\(Int(sensorManager.cpuTemp.rounded()))°" : "-°"
         case .rpm:
-            button.title = sensorManager.fan0RPM > 0 ? "\(Int(sensorManager.fan0RPM.rounded()))" : "—"
+            button.title = sensorManager.fan0RPM > 0 ? "\(Int(sensorManager.fan0RPM.rounded()))" : "-"
         case .temperatureAndRPM:
-            let temp = sensorManager.cpuTemp > 0 ? "\(Int(sensorManager.cpuTemp.rounded()))°" : "—°"
-            let rpm = sensorManager.fan0RPM > 0 ? "\(Int(sensorManager.fan0RPM.rounded()))" : "—"
+            let temp = sensorManager.cpuTemp > 0 ? "\(Int(sensorManager.cpuTemp.rounded()))°" : "-°"
+            let rpm = sensorManager.fan0RPM > 0 ? "\(Int(sensorManager.fan0RPM.rounded()))" : "-"
             button.title = "\(temp) \(rpm)"
         }
     }

@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+# Chill installer — postinstall
+#
+# By the time this runs, the installer engine has already laid down every file
+# in the payload. This script only *activates* the privileged helper. A hiccup
+# while talking to launchd (which is common and frequently cosmetic) must NOT
+# fail the whole installation, so this script is deliberately best-effort and
+# always exits 0. If the daemon can't be loaded right now, its RunAtLoad key
+# starts it at the next boot/login anyway.
+#
+# Notes on launchctl: `bootstrap` regularly returns a non-zero status — most
+# infamously `5: Input/output error` — even when the job is actually registered.
+# The previous version let that failure flow into an unguarded fallback under
+# `set -e`, which aborted postinstall and surfaced "The installation failed."
+# We never use `set -e` here; every external call is guarded and the real
+# success check is `launchctl print` at the end.
+
+set -u
+
+APP_PATH="/Applications/Chill.app"
+HELPER_PATH="/Library/PrivilegedHelperTools/com.chill.helper"
+HELPER_PLIST="/Library/LaunchDaemons/com.chill.helper.plist"
+HELPER_LABEL="com.chill.helper"
+
+# Ownership / permissions. The payload already installs these as root:wheel with
+# the right modes; this is belt-and-suspenders and is not allowed to fail.
+chown -R root:wheel "$APP_PATH" 2>/dev/null || true
+chown root:wheel "$HELPER_PATH" "$HELPER_PLIST" 2>/dev/null || true
+chmod 544 "$HELPER_PATH" 2>/dev/null || true
+chmod 644 "$HELPER_PLIST" 2>/dev/null || true
+
+# Tear down any previously-registered instance so bootstrap starts from a clean
+# slate. Harmless no-op when nothing is loaded.
+launchctl bootout "system/$HELPER_LABEL" 2>/dev/null || true
+
+# Load the daemon. Treat a non-zero bootstrap as non-fatal and fall back to the
+# legacy loader; the authoritative check is `launchctl print` below.
+if ! launchctl bootstrap system "$HELPER_PLIST" 2>/dev/null; then
+    launchctl load -w "$HELPER_PLIST" 2>/dev/null || true
+fi
+
+launchctl enable "system/$HELPER_LABEL" 2>/dev/null || true
+launchctl kickstart -k "system/$HELPER_LABEL" 2>/dev/null || true
+
+if launchctl print "system/$HELPER_LABEL" >/dev/null 2>&1; then
+    echo "Chill: helper ${HELPER_LABEL} is loaded."
+else
+    echo "Chill: helper not loaded yet; it will start at next boot/login." >&2
+fi
+
+# Launch the app for the user who is actually logged in at the console.
+CONSOLE_USER="$(/usr/sbin/scutil <<< 'show State:/Users/ConsoleUser' \
+    | /usr/bin/awk '/Name :/ && $3 != "loginwindow" { print $3; exit }')"
+if [ -n "${CONSOLE_USER:-}" ]; then
+    CONSOLE_UID="$(id -u "$CONSOLE_USER" 2>/dev/null || true)"
+    if [ -n "${CONSOLE_UID:-}" ]; then
+        launchctl asuser "$CONSOLE_UID" open "$APP_PATH" >/dev/null 2>&1 || true
+    fi
+fi
+
+exit 0

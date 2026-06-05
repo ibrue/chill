@@ -25,7 +25,50 @@ Download the latest installer package from GitHub Releases:
 
 https://github.com/ibrue/chill/releases/latest/download/Chill-v1.0.0.pkg
 
-Open `Chill-v1.0.0.pkg` and follow the prompts. The installer copies `Chill.app` to `/Applications`, installs the privileged helper, loads its LaunchDaemon, and launches Chill. You will be prompted for your password because the helper needs to be installed in `/Library/PrivilegedHelperTools`.
+Open the `.pkg` and follow the prompts. The installer copies `Chill.app` to `/Applications`, installs the privileged helper, loads its LaunchDaemon, and launches Chill. You will be prompted for your password because the helper needs to be installed in `/Library/PrivilegedHelperTools`.
+
+## Updates
+
+Chill checks for updates via [Sparkle](https://sparkle-project.org/) against the appcast at:
+
+```
+https://github.com/ibrue/chill/releases/latest/download/appcast.xml
+```
+
+Click the download arrow in the popover header to check manually. Updates are delivered as signed, notarized `.pkg` files — installing one will prompt for your admin password (because the privileged helper has to be re-installed).
+
+### Releasing a new version (maintainers)
+
+One-time setup:
+
+1. Generate an EdDSA keypair for Sparkle update signatures:
+   ```bash
+   ./Sparkle/bin/generate_keys
+   ```
+   Store the private key file securely (1Password, encrypted disk). The public key is printed — paste it into `project.yml` under `SUPublicEDKey` and regenerate the project.
+2. Store notarization credentials in the keychain:
+   ```bash
+   xcrun notarytool store-credentials chill-notary \
+       --apple-id you@example.com \
+       --team-id YOURTEAMID \
+       --password <app-specific-password>
+   ```
+
+Then to ship a release:
+
+```bash
+export VERSION=1.0.1
+export APP_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
+export INSTALLER_SIGN_IDENTITY="Developer ID Installer: Your Name (TEAMID)"
+export DEVELOPMENT_TEAM=TEAMID
+export NOTARY_PROFILE=chill-notary
+export SPARKLE_BIN_DIR=/path/to/Sparkle/bin
+export SPARKLE_PRIVATE_KEY_FILE=/secure/path/to/sparkle_ed_private_key
+
+./Scripts/publish_release.sh
+```
+
+The script builds, signs, notarizes, staples, generates a signed appcast, and creates the GitHub release with both `Chill-v$VERSION.pkg` and `appcast.xml` attached.
 
 If you prefer to build and install from source:
 

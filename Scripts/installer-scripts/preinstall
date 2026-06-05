@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Chill installer — preinstall
+#
+# Runs before the payload is laid down. Quiesces any running copy of Chill and
+# unloads a previously-installed helper so the postinstall can bootstrap a fresh
+# instance cleanly. Like the postinstall, this is best-effort and always exits 0
+# — failing here (e.g. on a first-time install where nothing is loaded yet)
+# must never abort the installation.
+
+set -u
+
+HELPER_PLIST="/Library/LaunchDaemons/com.chill.helper.plist"
+HELPER_LABEL="com.chill.helper"
+
+# Quit a running app instance so its files can be replaced.
+pkill -f '/Chill.app/Contents/MacOS/Chill' 2>/dev/null || true
+
+# Unload an existing daemon if one is registered. Try the modern service-target
+# form first, then the legacy plist form; both are no-ops on a clean install.
+launchctl bootout "system/$HELPER_LABEL" 2>/dev/null \
+    || launchctl unload "$HELPER_PLIST" 2>/dev/null \
+    || true
+
+exit 0

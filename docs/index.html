@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chill - Smart fan control for Apple Silicon</title>
+<meta name="description" content="Chill is a menu bar app that shifts your Apple Silicon Mac's fan curve earlier, so it stays cooler and quieter under load.">
+<style>
+  :root {
+    --bg: #0c1014;
+    --card: #151b22;
+    --line: #232c36;
+    --text: #e7edf3;
+    --muted: #9fb0c0;
+    --primary: #66c7f2;
+    --secondary: #9ee6d9;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; }
+  body {
+    margin: 0;
+    font-family: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: radial-gradient(1100px 600px at 50% -10%, rgba(102,199,242,0.14), transparent 60%), var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 22px; }
+  header { text-align: center; padding: 92px 0 28px; }
+  .mark {
+    width: 84px; height: 84px; margin: 0 auto 22px; border-radius: 22px;
+    display: grid; place-items: center;
+    background: linear-gradient(140deg, var(--primary), var(--secondary));
+    box-shadow: 0 16px 40px rgba(102,199,242,0.32);
+    font-size: 44px;
+  }
+  h1 { font-size: clamp(34px, 6vw, 54px); margin: 0 0 10px; letter-spacing: -0.02em; }
+  .tagline { font-size: clamp(17px, 2.6vw, 21px); color: var(--muted); margin: 0 auto; max-width: 32ch; }
+  .cta { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin: 34px 0 10px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 22px; border-radius: 12px; font-weight: 600; font-size: 16px;
+    text-decoration: none; border: 1px solid transparent; transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: linear-gradient(140deg, var(--primary), var(--secondary)); color: #06202b; box-shadow: 0 10px 26px rgba(102,199,242,0.30); }
+  .btn-ghost { color: var(--text); border-color: var(--line); background: var(--card); }
+  .brew { margin: 18px auto 0; max-width: 460px; }
+  .brew code {
+    display: block; background: #0a0e12; border: 1px solid var(--line); color: var(--secondary);
+    padding: 12px 16px; border-radius: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14.5px;
+  }
+  .brew small { color: var(--muted); display: block; margin-top: 8px; }
+  section { padding: 30px 0; }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 0 0 18px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 17px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .req { color: var(--muted); font-size: 15px; }
+  .req strong { color: var(--text); }
+  footer { text-align: center; color: var(--muted); padding: 40px 0 60px; font-size: 14px; border-top: 1px solid var(--line); margin-top: 30px; }
+  footer a { color: var(--primary); text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="mark">&#10052;&#65039;</div>
+      <h1>Chill</h1>
+      <p class="tagline">Smart fan control for Apple Silicon. Keep your Mac cooler and quieter under load.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/ibrue/chill/releases/latest">Download for Apple Silicon</a>
+        <a class="btn btn-ghost" href="https://github.com/ibrue/chill">View on GitHub</a>
+      </div>
+      <div class="brew">
+        <code>brew install --cask ibrue/tap/chill</code>
+        <small>Signed with Developer ID and notarized by Apple.</small>
+      </div>
+    </header>
+
+    <section>
+      <h2>What it does</h2>
+      <div class="grid">
+        <div class="card"><h3>Cool earlier</h3><p>Shifts Apple's fan curve 4&deg;C or 8&deg;C earlier, or go full Performance, all from the menu bar.</p></div>
+        <div class="card"><h3>Live monitoring</h3><p>CPU and GPU temperatures, per-fan RPM, and power draw at a glance.</p></div>
+        <div class="card"><h3>Per-app rules</h3><p>Switch profiles automatically when demanding apps launch.</p></div>
+        <div class="card"><h3>Auto updates</h3><p>Quietly keeps itself up to date with signed, notarized releases.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Requirements</h2>
+      <p class="req"><strong>macOS 14 or later</strong> on an <strong>Apple Silicon Mac</strong> (M1 through M4). Chill installs a small privileged helper to control the fans, so you'll be asked for your admin password once during install.</p>
+    </section>
+  </div>
+
+  <footer>
+    <div class="wrap">
+      Chill is open source. <a href="https://github.com/ibrue/chill">github.com/ibrue/chill</a>
+    </div>
+  </footer>
+</body>
+</html>

@@ -19,13 +19,21 @@ A beautiful, minimal menu bar app for controlling Apple Silicon Mac fans via SMC
 - Xcode 15+
 - XcodeGen
 
-## Install From GitHub
+## Install
 
-Download the latest installer package from GitHub Releases:
+### Homebrew (recommended)
 
-https://github.com/ibrue/chill/releases/latest/download/Chill-v1.0.0.pkg
+```sh
+brew install --cask ibrue/tap/chill
+```
 
-Open the `.pkg` and follow the prompts. The installer copies `Chill.app` to `/Applications`, installs the privileged helper, loads its LaunchDaemon, and launches Chill. You will be prompted for your password because the helper needs to be installed in `/Library/PrivilegedHelperTools`.
+Uninstall any time with `brew uninstall --cask chill`.
+
+### Direct download
+
+Grab the latest signed, notarized installer from the [releases page](https://github.com/ibrue/chill/releases/latest), open the `.pkg`, and follow the prompts.
+
+Either way you'll be asked for your admin password: Chill installs a small privileged helper to `/Library/PrivilegedHelperTools` (loaded as a LaunchDaemon) that does the actual fan control, then copies `Chill.app` to `/Applications` and launches it.
 
 ## Updates
 

@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chill - Smart fan control for Apple Silicon</title>
-<meta name="description" content="Chill is a menu bar app that shifts your Apple Silicon Mac's fan curve earlier, so it stays cooler and quieter under load.">
+<meta name="description" content="Chill is a menu bar app that shifts your Apple Silicon Mac's fan curve earlier, so it runs cooler under load.">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
 <style>
   :root {
     --bg: #0c1014;
@@ -27,11 +29,8 @@
   .wrap { max-width: 880px; margin: 0 auto; padding: 0 22px; }
   header { text-align: center; padding: 92px 0 28px; }
   .mark {
-    width: 84px; height: 84px; margin: 0 auto 22px; border-radius: 22px;
-    display: grid; place-items: center;
-    background: linear-gradient(140deg, var(--primary), var(--secondary));
-    box-shadow: 0 16px 40px rgba(102,199,242,0.32);
-    font-size: 44px;
+    width: 88px; height: 88px; margin: 0 auto 22px; display: block;
+    filter: drop-shadow(0 16px 40px rgba(102,199,242,0.34));
   }
   h1 { font-size: clamp(34px, 6vw, 54px); margin: 0 0 10px; letter-spacing: -0.02em; }
   .tagline { font-size: clamp(17px, 2.6vw, 21px); color: var(--muted); margin: 0 auto; max-width: 32ch; }
@@ -65,9 +64,9 @@
 <body>
   <div class="wrap">
     <header>
-      <div class="mark">&#10052;&#65039;</div>
+      <img class="mark" src="icon.png" width="88" height="88" alt="Chill app icon">
       <h1>Chill</h1>
-      <p class="tagline">Smart fan control for Apple Silicon. Keep your Mac cooler and quieter under load.</p>
+      <p class="tagline">Smart fan control for Apple Silicon. Keep your Mac cooler under load.</p>
       <div class="cta">
         <a class="btn btn-primary" href="https://github.com/ibrue/chill/releases/latest">Download for Apple Silicon</a>
         <a class="btn btn-ghost" href="https://github.com/ibrue/chill">View on GitHub</a>

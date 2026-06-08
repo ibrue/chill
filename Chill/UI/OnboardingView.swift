@@ -40,7 +40,7 @@ struct OnboardingView: View {
 
     private var welcomeStep: some View {
         stepScaffold(symbol: "snowflake", title: "Welcome to Chill", subtitle: Brand.tagline) {
-            Text("Chill keeps your Apple Silicon Mac cooler and quieter by taking smart control of its fans.")
+            Text("Chill keeps your Apple Silicon Mac cooler by taking smart control of its fans.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
         }
